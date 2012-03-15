@@ -92,52 +92,69 @@ class grsnWallImagerDisplayS(ptResponder):
         self.id = 52397
         self.version = 1
         PtDebugPrint("grsnWallImagerDisplayS::init end")        
-"""
+
+    def RequestGameState(self):
+        ageSDL = PtGetAgeSDL()
+        
+        for blocker in ageSDL["southWall"]:
+            if blocker >= 0:
+                southWall.value[blocker].runAttachedResponder(kTeamLightsOn)
+                
     def OnServerInitComplete(self):
         global ReceiveInit
         
+        ageSDL = PtGetAgeSDL()
         PtDebugPrint("grsnWallPython::OnServerInitComplete")        
         solo = true
         if len(PtGetPlayerList()):
             solo = false
             ReceiveInit = true
+            self.RequestGameState()
             return
         else:
             print"solo in climbing wall"
             
+        #ageSDL.setFlags("nState",0,1)
+        #ageSDL.setFlags("sState",0,1)
+        #ageSDL.setFlags("NumBlockers",0,1)
+        #ageSDL.setFlags("nBlockerChange",0,1)
+        #ageSDL.setFlags("sBlockerChange",0,1)
         
-    def OnClimbingWallInit(self,type,state,value):
-        global ReceiveInit
+        ageSDL.setNotify(self.key,"nState",0.0)
+        ageSDL.setNotify(self.key,"sState",0.0)
+        ageSDL.setNotify(self.key,"NumBlockers",0.0)
+        ageSDL.setNotify(self.key,"nBlockerChange",0.0)
+        ageSDL.setNotify(self.key,"sBlockerChange",0.0)
         
-        print"grsnClimbingWall::OnClimbingWallInit type ",type," state ",state," value ",value
-        if (ReceiveInit == false):
-            print"failed to receive init"
-            return
-        if (type == ptClimbingWallMsgType.kEndGameState):
-            ReceiveInit = false
-            print "finished receiving total game state"
+        #ageSDL.sendToClients("nState")
+        #ageSDL.sendToClients("sState")
+        #ageSDL.sendToClients("NumBlockers")
+        #ageSDL.sendToClients("nBlockerChange")
+        #ageSDL.sendToClients("sBlockerChange")
+            
         
-        if (type == ptClimbingWallMsgType.kTotalGameState):
-            print "begin receiving total game state"
+    def OnSDLNotify(self,VARname,SDLname,playerID,tag):
+        global NorthState
+        global SouthState
         
-        elif (type == ptClimbingWallMsgType.kAddBlocker and state > 0 and value == 0):
-            southWall.value[state].runAttachedResponder(kTeamLightsOn)
-
-    def OnClimbingWallEvent(self,type,state,value):
+        ageSDL = PtGetAgeSDL()
+        value = ageSDL[VARname][0]
+        state = value
+        print "grsnWallImagerDisplayS.OnSDLNotify: VARname = ",VARname," SDLname = ",SDLname," playerID = ",playerID," value = ",value
         
-        if (type == ptClimbingWallMsgType.kAddBlocker and value == false):            #display wall settings
-            southWall.value[state].runAttachedResponder(kTeamLightsOn)
-            print"Imager display S drawing wall index",state
-                    
-        elif (type == ptClimbingWallMsgType.kRemoveBlocker and value == false):
-            southWall.value[state].runAttachedResponder(kTeamLightsOff)
-            print"Imager display S clearing wall index",state
-        
-        elif (type == ptClimbingWallMsgType.kNewState):
-            if (state == ptClimbingWallMsgState.kSouthSit or state == ptClimbingWallMsgState.kNorthSit ):
-                #clear wall settings
+        if ((VARname == "nState") or (VARname == "sState")):
+            if ((value == kSouthSit) or (value == kNorthSit)):
                 i = 0
                 while (i < 171):
+                    #clear wall settings
                     southWall.value[i].runAttachedResponder(kTeamLightsOff)
-                    i = i + 1
-"""
+                    i = i + 1                
+        elif (VARname == "sBlockerChange"):
+            index = value
+            on = ageSDL[VARname][1]
+            if (on):
+                southWall.value[state].runAttachedResponder(kTeamLightsOn)
+                print"Imager display S drawing n wall index",state               
+            else:
+                southWall.value[state].runAttachedResponder(kTeamLightsOff)
+                print"Imager display S clearing n wall index",state

@@ -65,10 +65,10 @@ NorthBlockers = [-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1]
 SouthBlockers = [-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1]
 
 ReceiveInit = false
-"""
-NorthState = ptClimbingWallMsgState.kWaiting
-SouthState = ptClimbingWallMsgState.kWaiting
-"""
+
+NorthState = 0
+SouthState = 0
+
 
 ## for team light responders
 kTeamLightsOn = 0
@@ -104,10 +104,11 @@ class grsnMainWallPython(ptResponder):
         self.id = 52394
         self.version = 1
         PtDebugPrint("grsnMainWallPython::init end")        
-"""    
+    
     def OnServerInitComplete(self):
         global ReceiveInit
         
+        ageSDL = PtGetAgeSDL()
         PtDebugPrint("grsnWallPython::OnServerInitComplete")        
         solo = true
         if len(PtGetPlayerList()):
@@ -116,6 +117,24 @@ class grsnMainWallPython(ptResponder):
             return
         else:
             print"solo in climbing wall"
+            
+        #ageSDL.setFlags("nState",0,1)
+        #ageSDL.setFlags("sState",0,1)
+        #ageSDL.setFlags("NumBlockers",0,1)
+        #ageSDL.setFlags("nBlockerChange",0,1)
+        #ageSDL.setFlags("sBlockerChange",0,1)
+        
+        ageSDL.setNotify(self.key,"nState",0.0)
+        ageSDL.setNotify(self.key,"sState",0.0)
+        ageSDL.setNotify(self.key,"NumBlockers",0.0)
+        ageSDL.setNotify(self.key,"nBlockerChange",0.0)
+        ageSDL.setNotify(self.key,"sBlockerChange",0.0)
+        
+        #ageSDL.sendToClients("nState")
+        #ageSDL.sendToClients("sState")
+        #ageSDL.sendToClients("NumBlockers")
+        #ageSDL.sendToClients("nBlockerChange")
+        #ageSDL.sendToClients("sBlockerChange")
     
     def OnClimbingBlockerEvent(self,blocker):
         
@@ -132,64 +151,34 @@ class grsnMainWallPython(ptResponder):
                 return
             i = i + 1
         
-                
-    def OnClimbingWallInit(self,type,state,value):
-        global ReceiveInit
-        global SouthState
-        global NorthState
-        
-        print"grsnMainClimbingWall::OnClimbingWallInit type ",type," state ",state," value ",value
-        if (ReceiveInit == false):
-            print"failed to receive init"
-            return
-        if (type == ptClimbingWallMsgType.kEndGameState):
-            ReceiveInit = false
-            print "finished receiving total game state"
-            # update lights display 
-            if (SouthState == ptClimbingWallMsgState.kSouthWin or \
-                NorthState == ptClimbingWallMsgState.kNorthWin or \
-                NorthState == ptClimbingWallMsgState.kNorthQuit or \
-                SouthState == ptClimbingWallMsgState.kSouthQuit):
-                    #display wall settings
-                i = 0
-                while (i < 20):
-                    value = SouthBlockers[i] 
-                    if (value > -1):
-                        southWall.value[value].runAttachedResponder(kTeamLightsOn)
-                        print"drawing s wall index",value
-                    value = NorthBlockers[i] 
-                    if (value >  -1):
-                        northWall.value[value].runAttachedResponder(kTeamLightsOn)
-                        print"drawing n wall index",value
-                    i = i + 1
-        
-        if (type == ptClimbingWallMsgType.kTotalGameState):
-            SouthState = state
-            NorthState = value
-            print "begin receiving total game state"
-        
-        elif (type == ptClimbingWallMsgType.kAddBlocker and state > 0):
-            self.SetWallIndex(state,true,value)
-                        
-        
-    def OnClimbingWallEvent(self,type,state,value):
+    def OnSDLNotify(self,VARname,SDLname,playerID,tag):
         global NorthState
         global SouthState
-        global NorthBlockers
-        global SouthBlockers
         
-        print"grsnMainClimbingWall::OnClimbingWallInit type ",type," state ",state," value ",value
+        ageSDL = PtGetAgeSDL()
+        value = ageSDL[VARname][0]
+        print "grsnMainWallPython.OnSDLNotify: VARname = ",VARname," SDLname = ",SDLname," playerID = ",playerID," value = ",value
         
-        if (type == ptClimbingWallMsgType.kNewState):
-            if (value == 1):
+        if (VARname == "nBlockerChange"):
+            team = 1
+            index = ageSDL[VARname][0]
+            on = ageSDL[VARname][1]
+            self.SetWallIndex(index,on,team)
+            
+        elif (VARname == "sBlockerChange"):
+            team = 0
+            index = ageSDL[VARname][0]
+            on = ageSDL[VARname][1]
+            self.SetWallIndex(index,on,team)
+        
+        elif ((VARname == "nState") or (VARname == "sState")):
+            state = value
+            if (VARname == "nState"):
                 NorthState = state
             else:
                 SouthState = state
-            if (state == ptClimbingWallMsgState.kSouthWin or \
-                state == ptClimbingWallMsgState.kNorthWin or \
-                state == ptClimbingWallMsgState.kNorthQuit or \
-                state == ptClimbingWallMsgState.kSouthQuit):
-                    #display wall settings
+            if ((state == kSouthWin) or (state == kNorthWin) or (state == kNorthQuit) or (state == kSouthQuit)):
+                #display wall settings
                 i = 0
                 while (i < 20):
                     value = SouthBlockers[i] 
@@ -201,7 +190,7 @@ class grsnMainWallPython(ptResponder):
                         northWall.value[value].runAttachedResponder(kTeamLightsOn)
                         print"drawing n wall index",value
                     i = i + 1
-            elif (state == ptClimbingWallMsgState.kSouthSelect):
+            elif (state == kSouthSelect):
                 #clear wall settings
                 i = 0
                 while (i < 171):
@@ -209,7 +198,7 @@ class grsnMainWallPython(ptResponder):
                     if (i < 20):
                         SouthBlockers[i] = -1
                     i = i + 1
-            elif (state == ptClimbingWallMsgState.kNorthSelect):
+            elif (state == kNorthSelect):
                 #clear wall settings
                 i = 0
                 while (i < 171):
@@ -217,13 +206,6 @@ class grsnMainWallPython(ptResponder):
                         NorthBlockers[i] = -1
                     northWall.value[i].runAttachedResponder(kTeamLightsOff)
                     i = i + 1
-
-        elif (type == ptClimbingWallMsgType.kAddBlocker):
-            self.SetWallIndex(state,true,value)
-            
-        
-        elif (type == ptClimbingWallMsgType.kRemoveBlocker):
-            self.SetWallIndex(state,false,value)
     
     def SetWallIndex(self,index,value,north):
         global SouthBlockers
@@ -264,7 +246,3 @@ class grsnMainWallPython(ptResponder):
                         return
                 SouthBlockers[i] = -1
                 print"removed index ",index," from list slot ",i
-    
-        
-
-        """
