@@ -504,16 +504,15 @@ class grsnWallPython(ptResponder):
             
             sTubeClose.run(self.key,fastforward=true,netForce=0)
             nTubeClose.run(self.key,fastforward=true,netForce=0)
-            print"requesting game state message from SDL"
         else:
             print"grsnWallPython: solo in climbing wall"
-        
-        i = 0 #Maybe this have to be in Solo???
+
+        i = 0 #reset Wall Physics
         while i<171:
             southWall.value[i].physics.disable()
             northWall.value[i].physics.disable()
             i = i + 1
-                
+
         ageSDL.setFlags("nChairOccupant",0,1)
         ageSDL.setFlags("sChairOccupant",0,1)
         ageSDL.setFlags("nState",0,1)
@@ -541,7 +540,7 @@ class grsnWallPython(ptResponder):
         ageSDL.sendToClients("sBlockerChange")
         ageSDL.sendToClients("northWall")
         ageSDL.sendToClients("southWall")
-        
+
         if (solo):
             ageSDL["northWall"] = (-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,)
             ageSDL["southWall"] = (-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,)
@@ -558,6 +557,7 @@ class grsnWallPython(ptResponder):
             SouthState = kWaiting
             NorthState = kWaiting
         else:
+            print"requesting game state message from SDL"
             self.RequestGameState()
     
     def OnSDLNotify(self,VARname,SDLname,playerID,tag):
@@ -1033,6 +1033,13 @@ class grsnWallPython(ptResponder):
                 self.ClearIndices(false)
                 self.ChangeGameState(kSouthSelect)
                 sPanelSound.run(self.key,avatar=PtGetLocalAvatar(),state='main')
+                note = ptNotify(self.key)
+                note.clearReceivers()
+                note.addReceiver(self.key)
+                note.setActivate(1)
+                note.netForce(1)
+                note.addVarKey('Reset', PtGetLocalAvatar().getKey())
+                note.send() #sending Blockerreset
                 if (northState == kWaiting or northState == kNorthSit or \
                     northState == kNorthWin or northState == kNorthQuit ):
                     print"force north chair to keep up"
@@ -1129,6 +1136,13 @@ class grsnWallPython(ptResponder):
                 self.ClearIndices(true)
                 #ageSDL.setIndex("nChairState",0,kNorthSelect)
                 nPanelSound.run(self.key,avatar=PtGetLocalAvatar(),state='main')
+                note = ptNotify(self.key)
+                note.clearReceivers()
+                note.addReceiver(self.key)
+                note.setActivate(1)
+                note.netForce(1)
+                note.addVarKey('Reset', PtGetLocalAvatar().getKey())
+                note.send() #sending Blockerreset
                 if (southState == kWaiting or southState == kSouthSit or \
                     southState == kSouthWin or southState == kSouthWin):
                     self.ChangeGameState(kSouthSelect)
@@ -1231,3 +1245,10 @@ class grsnWallPython(ptResponder):
                         #SouthCount = numSelected
                         #self.SetWallIndex(index,false,false)
                         self.ChangeBlockerState(false,index,false)
+            elif (event[0] == kVariableEvent):
+                if (event[1] == "Reset"):
+                    i = 0 #reset Wall Physics
+                    while i<171:
+                        northWall.value[i].physics.disable()
+                        southWall.value[i].physics.disable()
+                        i = i + 1
