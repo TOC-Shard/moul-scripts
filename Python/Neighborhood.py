@@ -49,6 +49,13 @@ event manager hooks for the Neighborhood
 
 from Plasma import *
 from PlasmaTypes import *
+import time
+
+
+sdlHNY = "nb01HappyNewYearVis"
+sdlFireworks = ["nb01FireworksOnBalcony","nb01FireworksOnBanner","nb01FireworksOnFountain"]
+
+EventTime = 3600
 
 class Neighborhood(ptResponder):
 
@@ -78,7 +85,79 @@ class Neighborhood(ptResponder):
                 #~ PtDebugPrint("%s:\tyour current count for %s is %s" % (kModuleName,kChronicleVarName,entry.chronicleGetValue()))
         #~ else:
             #~ PtDebugPrint("%s:\tERROR trying to access vault -- can't update %s variable in chronicle." % (kModuleName,kChronicleVarName))
-        pass
+        agevault = ptAgeVault()
+        ageinfo = agevault.getAgeInfo()
+        guid = ageinfo.getAgeInstanceGuid()
+        if guid == "cbf61339-817f-4b97-b642-cb55a46026e3": # Neighborhood-GUID from "Contest Hood"
+            PtPageInNode("TOCmod02")
             
     def OnNotify(self,state,id,events):
         pass
+
+    def OnServerInitComplete(self):
+        self.HNY_SEE()
+        for sdl in sdlFireworks:
+            self.SetSDL(sdl, 0, 0)
+
+    def OnTimer(self, TimerID):
+        PtDebugPrint('Neighborhood: OnTimer: callback id=%d' % TimerID)
+        if (TimerID == 1):
+            for sdl in sdlFireworks:
+                self.SetSDL(sdl, 0, 1)
+            PtDebugPrint('Neighborhood: Fireworks starts')
+            PtAtTimeCallback(self.key, 120, 3)
+        elif (TimerID == 2):
+            self.ISetTimers()
+        elif (TimerID == 3):
+            for sdl in sdlFireworks:
+                self.SetSDL(sdl, 0, 0)
+            PtDebugPrint('Neighborhood: Fireworks is - disabled')
+            #re-set timers
+            self.ISetTimers()
+
+    def SetSDL(self, varname, index, value):
+        sdl = PtGetAgeSDL()
+        sdl.setFlags(varname, 1, 1)
+        sdl.sendToClients(varname)
+        sdl.setIndex(varname, index, value)
+
+    def ISetTimers(self):
+        dnitime = PtGetDniTime()
+        minNum = int(time.strftime('%M', time.gmtime(dnitime)))
+        secNum = int(time.strftime('%S', time.gmtime(dnitime)))
+        inTime = (secNum + (minNum * 60))
+        #if (inTime == 0):
+        #    PtAtTimeCallback(self.key, 0, 1)
+        #    PtDebugPrint(('Neighborhood: Start Fireworks'))
+        #else:
+        #    PtDebugPrint('Neighborhood: Fireworks - You missed the event.')
+        timeLeft = (EventTime - inTime)
+        inmin = (timeLeft / 60)
+        #start fireworks in <time to 0 seconds>
+        PtAtTimeCallback(self.key, timeLeft, 1)
+        PtDebugPrint('Neighborhood: Next Firework Show starts in %d seconds (%d minutes)' % (timeLeft, inmin))
+
+    def HNY_SEE(self):
+        dnitime = PtGetDniTime()
+        dayNum = int(time.strftime('%d', time.gmtime(dnitime)))
+        monthNum = int(time.strftime('%m', time.gmtime(dnitime)))
+        sdlName = sdlHNY
+        if (monthNum == 12):
+            if (dayNum == 31):
+                self.ISetTimers()
+                self.SetSDL(sdlName, 0, 1)
+                PtDebugPrint(('Neighborhood: HNY is - enabled'))
+            else:
+                self.SetSDL(sdlName, 0, 0)
+                PtDebugPrint(('Neighborhood: HNY is - disabled'))
+        elif (monthNum == 1):
+            if (dayNum == 1):
+                self.ISetTimers()
+                self.SetSDL(sdlName, 0, 1)
+                PtDebugPrint(('Neighborhood: HNY is - enabled'))
+            else:
+                self.SetSDL(sdlName, 0, 0)
+                PtDebugPrint(('Neighborhood: HNY is - disabled'))
+        else:
+            self.SetSDL(sdlName, 0, 0)
+            PtDebugPrint(('Neighborhood: HNY is - disabled'))

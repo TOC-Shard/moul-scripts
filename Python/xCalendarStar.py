@@ -72,6 +72,7 @@ boolFirstUpdate = ptAttribBoolean(5,"Eval On First Update?",0)
 
 boolCalStar = false
 AgeStartedIn = None
+sdlVars = {1: 'grsnCalendarSpark01', 2: 'kdshCalendarSpark02', 3: 'giraCalendarSpark03', 4: 'grsnCalendarSpark04', 5: 'dsntCalendarSpark05', 6: 'minkCalendarSpark06', 7: 'ercaCalendarSpark07', 8: 'jlakCalendarSpark08', 9: 'tldnCalendarSpark09', 10: 'philCalendarSpark10', 11: 'grtzCalendarSpark11', 12: 'mystCalendarSpark12'}
 
 
 class xCalendarStar(ptResponder):
@@ -100,6 +101,7 @@ class xCalendarStar(ptResponder):
                     PtDebugPrint("ERROR: xCalendarStar.OnFirstUpdate():\tERROR reading age SDL")
                     pass
                 PtDebugPrint("DEBUG: xCalendarStar.OnFirstUpdate():\t%s = %d" % (sdlCalStar.value,boolCalStar) )
+                self.Initialize()
 
     def OnServerInitComplete(self):
         global boolCalStar
@@ -113,6 +115,33 @@ class xCalendarStar(ptResponder):
                     PtDebugPrint("ERROR: xCalendarStar.OnServerInitComplete():\tERROR reading age SDL")
                     pass
                 PtDebugPrint("DEBUG: xCalendarStar.OnServerInitComplete():\t%s = %d" % (sdlCalStar.value,boolCalStar) )
+                self.Initialize()
+
+    def Initialize(self):
+        global AgeStartedIn
+        global boolCalStar
+        if (AgeStartedIn == PtGetAgeName()):
+            if (not (len(PtGetPlayerList()))):
+                import time
+                dnitime = PtGetDniTime()
+                monthNum = int(time.strftime('%m', time.gmtime(dnitime)))
+                sparkNum = int(sdlCalStar.value[-2:])
+                sdlName = sdlVars[sparkNum]
+                sdl = PtGetAgeSDL()
+                sdl.setFlags(sdlName, 1, 1)
+                sdl.sendToClients(sdlName)
+                if (monthNum == sparkNum):
+                    sdl.setIndex(sdlName, 0, 1)
+                    PtDebugPrint(('xCalendarStar: Current month is %d, sparkly is %d - enabling' % (monthNum, sparkNum)))
+                else:
+                    sdl.setIndex(sdlName, 0, 0)
+                    PtDebugPrint(('xCalendarStar: Current month is %d, sparkly is %d - disabling' % (monthNum, sparkNum)))
+            psnlSDL = xPsnlVaultSDL()
+            try:
+                boolCalStar = psnlSDL[sdlCalStar.value][0]
+            except:
+                PtDebugPrint('ERROR: xCalendarStar.Initialize():\tERROR reading age SDL')
+            PtDebugPrint(('DEBUG: xCalendarStar.Initialize():\t%s = %d' % (sdlCalStar.value, boolCalStar)))
 
 
     def OnNotify(self,state,id,events):

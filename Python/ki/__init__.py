@@ -1295,10 +1295,7 @@ class xKI(ptModifier):
         self.takingAPicture = False
 
         # Save the image to the filesystem.
-        if "saveAsPNG" in dir(image):
-            preferredExtension = "png"
-        else:
-            preferredExtension = "jpg"
+        preferredExtension = "jpg"
 
         basePath = os.path.join(PtGetUserPath(), kImages.Directory)
         if not PtCreateDir(basePath):
@@ -1315,10 +1312,7 @@ class xKI(ptModifier):
         tryName = os.path.join(basePath, U"{}{:04d}.{}".format(kImages.FileNameTemplate, firstMissing, preferredExtension))
 
         PtDebugPrint(u"xKI.OnScreenCaptureDone(): Saving image to \"{}\".".format(tryName), level=kWarningLevel)
-        if "saveAsPNG" in dir(image):
-            image.saveAsPNG(tryName)
-        else:
-            image.saveAsJPEG(tryName, 90)
+        image.saveAsJPEG(tryName, 90)
 
     ## Called by Plasma when the player list has been updated.
     # This makes sure that everything is updated and refreshed.

@@ -1,0 +1,11 @@
+StartDateTime=0000000001
+DayLength=00.016
+MaxCapacity=10
+SequencePrefix=6500
+ReleaseVersion=0
+Page=Scene,0
+Page=testprp01,1
+Page=testprp02,2
+Page=testprp03,3
+Page=testprp04,4
+Page=testprp05,5

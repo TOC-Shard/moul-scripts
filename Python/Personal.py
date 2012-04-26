@@ -208,6 +208,46 @@ class Personal(ptResponder):
             PtDebugPrint("Reward clothing list empty, not adding any clothing")
 
 
+        #Check for Hood-specific clothing
+        vault = ptVault()
+        hoodinfo = vault.getLinkToMyNeighborhood().getAgeInfo()
+        hoodguid = hoodinfo.getAgeInstanceGuid()
+        if currentgender == kFemaleClothingGroup:
+            genderPrefix = "FHood_"
+        else:
+            genderPrefix = "MHood_"
+        #Guild of Sleepers
+        if hoodguid == "56d1173b-60b0-4b02-8e2f-b7730a61b4ec":
+            clothingName = genderPrefix + "GuildOfSleepers"
+            self.AddHoodClothing(clothingName)
+        else:
+            PtDebugPrint("No Special Hood Clothing!")
+
+        #####REMOVING CHRONICLES#####
+        remove = ["KIVirus", "KIVirusLevel"]
+        vault = ptVault()
+        folder = vault.getChronicleFolder()
+        folderNodeChildList = folder.getChildNodeRefList()
+        for folderChild in folderNodeChildList:
+            childNode = folderChild.getChild()
+            chronicle = childNode.upcastToChronicleNode()
+            name = chronicle.getName()
+            print name
+            if (name in remove):
+                folder.removeNode(childNode)
+                print "--->removed"
+
+
+    def AddHoodClothing(self, clothingName):
+        avatar = PtGetLocalAvatar()
+        clothingList = avatar.avatar.getWardrobeClothingList()
+        if clothingName not in clothingList:
+            PtDebugPrint("Adding "+clothingName+" to your closet")
+            avatar.avatar.addWardrobeClothingItem(clothingName,ptColor().white(),ptColor().white())
+        else:
+            PtDebugPrint("You already have " + clothingName + " so I'm not going to add it again.")
+
+
     def Load(self):
         pass
 

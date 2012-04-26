@@ -63,8 +63,9 @@ respAudioStop = ptAttribResponder(4,"Audio stop responder")
 respEnable = ptAttribResponder(5, "Enabled resp (if necessary)")
 respDisable = ptAttribResponder(6, "Disabled resp (if necessary)")
 
+PetType = ptAttribString(7, "Pet Type (if necessary)")
 #globals
-TotalPossibleYeeshaPages = 25
+TotalPossibleYeeshaPages = 30
 HideCleftPole = 0
 
 
@@ -73,7 +74,7 @@ class psnlYeeshaPageChanges(ptMultiModifier):
     def __init__(self):
         ptMultiModifier.__init__(self)
         self.id = 5232
-        version = 7
+        version = 8
         self.version = version
         PtDebugPrint("__init__psnlYeeshaPageChanges v%d.%d" % (version,1),level=kWarningLevel)
 
@@ -104,6 +105,7 @@ class psnlYeeshaPageChanges(ptMultiModifier):
 #~ (YeeshaPage22) grass
 #~ (YeeshaPage24) thunderstorm
 #~ (YeeshaPage25) Bahro poles/totems
+#~ (YeeshaPage26) Cat
 
 #Meaning of SDL values for each Yeesha Page:
 #
@@ -227,9 +229,28 @@ class psnlYeeshaPageChanges(ptMultiModifier):
                     self.sceneobject.draw.disable()
                     self.sceneobject.physics.suppress(true)
                 else:
-                    #PtDebugPrint("psnlYeeshaPageChanges: Attempting to enable drawing and collision on %s..." % self.sceneobject.getName())
-                    self.sceneobject.draw.enable()
-                    self.sceneobject.physics.suppress(false)
+                    if PageNumber.value == 26: #PetChange
+                        PetY = PetType.value
+                        vault = ptVault()
+                        if type(vault) != type(None): #is the Vault online?
+                            entry = vault.findChronicleEntry('PetType')
+                            if (type(entry) == type(None)): #does entry exist?
+                                PtDebugPrint("DEBUG xPetBrain::getChronicleEntry - No entry found...creating")
+                                vault.addChronicleEntry('PetType', 0, 'PetCat')
+                                Pet = 'PetCat'
+                            else:
+                                Pet = entry.chronicleGetValue()
+                            if(PetY == Pet):
+                                self.sceneobject.draw.enable()
+                                self.sceneobject.physics.suppress(false)
+                            else:
+                                self.sceneobject.draw.disable()
+                                self.sceneobject.physics.suppress(true)
+                        else:
+                            PtDebugPrint("ERROR psnlYeeshaPageChange::OnServerInitComplete - Vault offline?")#PtDebugPrint("psnlYeeshaPageChanges: Attempting to enable drawing and collision on %s..." % self.sceneobject.getName())
+                    else:
+                        self.sceneobject.draw.enable()
+                        self.sceneobject.physics.suppress(false)
             
             respAudioStart.run(self.key,avatar=None,fastforward=0)
             respEnable.run(self.key,avatar=None,fastforward=0)

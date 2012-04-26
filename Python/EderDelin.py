@@ -49,7 +49,9 @@ AgeSDL hook for EderDelin
 
 from Plasma import *
 from PlasmaTypes import *
+import time
 
+sdlWinter = "dlnWinterVis"
 
 class EderDelin(ptResponder):
 
@@ -61,3 +63,29 @@ class EderDelin(ptResponder):
 
     def OnNotify(self,state,id,events):
         pass
+
+    def OnServerInitComplete(self):
+        self.WinterSEE()
+        
+        
+    def SetSDL(self, varname, index, value):
+        sdl = PtGetAgeSDL()
+        sdl.setFlags(varname, 1, 1)
+        sdl.sendToClients(varname)
+        sdl.setIndex(varname, index, value)
+
+
+    def WinterSEE(self):
+        dnitime = PtGetDniTime()
+        dayNum = int(time.strftime('%d', time.gmtime(dnitime)))
+        monthNum = int(time.strftime('%m', time.gmtime(dnitime)))
+        sdlName = sdlWinter
+        if monthNum < 12 and monthNum > 3:
+            self.SetSDL(sdlName, 0, 0)
+            PtDebugPrint(('EderDelin: Winter is - disabled'))
+        elif (monthNum == 12 and dayNum <= 21) or (monthNum == 3 and dayNum >= 21):
+            self.SetSDL(sdlName, 0, 0)
+            PtDebugPrint(('EderDelin: Winter is - disabled'))
+        else:
+            self.SetSDL(sdlName, 0, 1)
+            PtDebugPrint(('EderDelin: Winter is - enabled'))

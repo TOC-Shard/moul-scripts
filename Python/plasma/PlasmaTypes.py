@@ -293,6 +293,17 @@ If seed is None, the system time is used."""
     else:
         avatar.avatar.setMorph("FFace",0,morph)
 
+def PtLinkToAge(ageName, spawnPoint="LinkInPointDefault", rule=1):
+    ageLink = ptAgeLinkStruct()
+    ageInfo = ptAgeInfoStruct()
+    spawnInfo = ptSpawnPointInfo()
+    ageInfo.setAgeFilename(ageName)
+    spawnInfo.setName(spawnPoint)
+    ageLink.setAgeInfo(ageInfo)
+    ageLink.setLinkingRules(rule)
+    ageLink.setSpawnPoint(spawnInfo)
+    ptNetLinkingMgr().linkToAge(ageLink)
+
 ####################################
 # Exceptions
 ####################################

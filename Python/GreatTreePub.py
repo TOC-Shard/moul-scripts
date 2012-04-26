@@ -50,6 +50,7 @@ AgeSDLHook for GreatTreePub
 from Plasma import *
 from PlasmaTypes import *
 
+Door = ["grtpBallHallDoorVis"]
 
 class GreatTreePub(ptResponder):
 
@@ -57,3 +58,13 @@ class GreatTreePub(ptResponder):
         ptResponder.__init__(self)
         self.id = 5323
         self.version = 1
+
+    def OnServerInitComplete(self):
+        for sdl in Door:
+            self.SetSDL(sdl, 0, 1)
+
+    def SetSDL(self, varname, index, value):
+        sdl = PtGetAgeSDL()
+        sdl.setFlags(varname, 1, 1)
+        sdl.sendToClients(varname)
+        sdl.setIndex(varname, index, value)

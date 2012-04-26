@@ -203,7 +203,8 @@ kLinkPanels = {
 }
 
 
-kHiddenPersonalAges = ["Personal", "Nexus", "Neighborhood", "city", "AvatarCustomization", "Cleft", "BaronCityOffice", "BahroCave", "PelletBahroCave", "Kveer", "Myst", "LiveBahroCaves", "LiveBahroCave"]
+kHiddenPersonalAges = ["Personal", "Nexus", "Neighborhood", "city", "AvatarCustomization", "Cleft", "BaronCityOffice", "BahroCave",
+    "PelletBahroCave", "Kveer", "Myst", "LiveBahroCaves", "LiveBahroCave", "cityofdimensions", "vothol", "trebivdil"]
 kHiddenCityLinks = ["islmPalaceBalcony03", "KadishGallery", "islmPalaceBalcony02", "islmDakotahRoof", ]
 kHiddenAgesIfInvited = ["BahroCave", "PelletBahroCave", "Pellet Cave", "LiveBahroCave", "LiveBahroCaves", "Myst"]
 
@@ -236,6 +237,9 @@ kPublicAgesDescription = {
      'GuildPub-Maintainers' : ("Nexus.Messages.GuildPubFull", "Nexus.Messages.GuildPubPopulation"),
      'GuildPub-Messengers' : ("Nexus.Messages.GuildPubFull", "Nexus.Messages.GuildPubPopulation"),
      'GuildPub-Writers' : ("Nexus.Messages.GuildPubFull", "Nexus.Messages.GuildPubPopulation"),
+     'cityofdimensions' : ("Nexus.Messages.CityFull", "Nexus.Messages.CityPopulation"),
+     'vothol' : ("Nexus.Message.CityFull", "Nexus.Message.CityPopulation"),
+     'trebivdil' : ("Nexus.Message.CityFull", "Nexus.Message.CityPopulation"),
 }
 
 # hood sorting vars
@@ -353,6 +357,9 @@ class nxusBookMachine(ptModifier):
             'guildPub' : AgeData(ageFilename = '', defaultMaxPop = 0, linkVisible = 0),
             'Neighborhood02' : AgeData(ageFilename = 'Neighborhood02', defaultMaxPop = 100, linkVisible = 0),
             'Kveer' : AgeData(ageFilename = 'Kveer', defaultMaxPop = 100, linkVisible = 0),
+            'cityofdimensions' : AgeData(ageFilename = 'cityofdimensions', defaultMaxPop = 100, linkVisible = 1),
+            'vothol' : AgeData(ageFilename = 'vothol', defaultMaxPop = 50, linkVisible = 1),
+            'trebivdil' : AgeData(ageFilename = 'trebivdil', defaultMaxPop = 50, linkVisible = 1),
             }
 
         self.categoryLinksList = {
@@ -1314,10 +1321,17 @@ class nxusBookMachine(ptModifier):
             else:
                 displayName = selectedInfo.getDisplayName()
 
+            #special cases: spawn points
+            spawnPoint = ptSpawnPointInfo()
+            if ageData.ageFilename == 'cityofdimensions':
+                spawnPoint.setName("LinkInPointGreatTree")
+            else:
+                spawnPoint = None #use default spawnpoint
+
             #normal cases: just add link with default link spot
             stringLinkInfo = U"%05d%   04d%   04d" %(0,0,0) #temporary consistency hack. fixme
             newEntry = LinkListEntry(displayName, stringLinkInfo, description, False, entryEnabled)
-            newEntry.setLinkStruct(selectedInfo) #create link to instance, use default spawnPoint
+            newEntry.setLinkStruct(selectedInfo, spawnPoint) #create link to instance
             cityLinks.append(newEntry)
 
         self.categoryLinksList[kCategoryCity] = cityLinks

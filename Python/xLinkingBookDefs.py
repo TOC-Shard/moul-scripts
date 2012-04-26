@@ -74,7 +74,7 @@ xYeeshaBookBroke = '<font size=10><cover src="xYeeshaBookCover*1#0.hsm">\
 #  format: ( "SDLVarName", 'BookHtml')
 # ...and then added to the xYeeshaPages list in the order in the Yeesha book
 #
-xYeeshaPage1 = ( "YeeshaPage1",   '<pb><pb><img src="xYeeshaPageAlphaSketch01*1#0.hsm" align=center check=00ff18,00800c,%d link=3>' )
+xYeeshaPage1 = ( "YeeshaPage1",   '<pb><pb><img src="xyeeshapagealphasketch01*1#0.hsm" align=center check=00ff18,00800c,%d link=3>' )
 xYeeshaPage2 = ( "YeeshaPage2",   '<pb><pb><img src="xYeeshaPageAlphaSketch02*1#0.hsm" align=center check=00ff18,00800c,%d link=4>' )
 xYeeshaPage3 = ( "YeeshaPage3",   '<pb><pb><img src="xYeeshaPageAlphaSketch03*1#0.hsm" align=center check=00ff18,00800c,%d link=5>' )
 xYeeshaPage4 = ( "YeeshaPage4",   '<pb><pb><img src="xYeeshaPageAlphaSketch04*1#0.hsm" align=center check=00ff18,00800c,%d link=6>' )
@@ -98,11 +98,11 @@ xYeeshaPage22 = ( "YeeshaPage22", '<pb><pb><img src="xYeeshaPageAlphaSketchGrass
 xYeeshaPage23 = ( "YeeshaPage23", '<pb><pb><img src="xYeeshaPageAlphaSketchErcaPlant*1#0.hsm" align=center check=00ff18,00800c,%d link=24>' )
 xYeeshaPage24 = ( "YeeshaPage24", '<pb><pb><img src="xYeeshaPageAlphaSketchStorm*1#0.hsm" align=center check=00ff18,00800c,%d link=25>' )
 xYeeshaPage25 = ( "YeeshaPage25", '<pb><pb><img src="xYeeshaPageAlphaSketch14*1#0.hsm" align=center check=00ff18,00800c,%d link=26>' )
-
+xYeeshaPage26 = ( "YeeshaPage26", '<pb><pb><img src="xYeeshaPageReltoCat*1#0.hsm" align=center check=00ff18,00800c,%d link=27>' )
 
 xYeeshaPages = [ xYeeshaPage1, xYeeshaPage2, xYeeshaPage3, xYeeshaPage4, xYeeshaPage5, xYeeshaPage6, xYeeshaPage7,\
                 xYeeshaPage8, xYeeshaPage9, xYeeshaPage10, xYeeshaPage12, xYeeshaPage13, xYeeshaPage14, xYeeshaPage15,\
-                xYeeshaPage16, xYeeshaPage17, xYeeshaPage18, xYeeshaPage19, xYeeshaPage20, xYeeshaPage21, xYeeshaPage22, xYeeshaPage23, xYeeshaPage24, xYeeshaPage25 ]
+                xYeeshaPage16, xYeeshaPage17, xYeeshaPage18, xYeeshaPage19, xYeeshaPage20, xYeeshaPage21, xYeeshaPage22, xYeeshaPage23, xYeeshaPage24, xYeeshaPage25, xYeeshaPage26]
 
 
 
