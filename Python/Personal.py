@@ -207,6 +207,8 @@ class Personal(ptResponder):
         else:
             PtDebugPrint("Reward clothing list empty, not adding any clothing")
 
+        #save the avatar for startup
+        avatar.avatar.saveClothingToFile(str(PtGetLocalPlayer().getPlayerID()) + ".clo")
 
     def Load(self):
         pass
