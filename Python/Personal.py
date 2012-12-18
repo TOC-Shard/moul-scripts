@@ -88,21 +88,12 @@ class Personal(ptResponder):
 
 
     def OnFirstUpdate(self):
-        # test for first time to play the intro movie
-        vault = ptVault()
-        entry = vault.findChronicleEntry(kIntroPlayedChronicle)
-        if type(entry) != type(None):
-            # already played intro sometime in the past... just let 'em play
-            # enable twice because if we came from the ACA (closet->ACA->personal) it was disabled twice
-            PtSendKIMessage(kEnableKIandBB,0)
-            PtSendKIMessage(kEnableKIandBB,0)
-            # enable yeesha book in case we came from the bahro cave
-            PtSendKIMessage(kEnableYeeshaBook,0)
-        else:
-            # make sure the KI and blackbar is still diabled
-            PtSendKIMessage(kDisableKIandBB,0)
-            # It's the first time... start the intro movie, just by loading the movie dialog
-            PtLoadDialog("IntroMovieGUI")
+        # already played intro sometime in the past... just let 'em play
+        # enable twice because if we came from the ACA (closet->ACA->personal) it was disabled twice
+        PtSendKIMessage(kEnableKIandBB,0)
+        PtSendKIMessage(kEnableKIandBB,0)
+        # enable yeesha book in case we came from the bahro cave
+        PtSendKIMessage(kEnableYeeshaBook,0)
 
         # turn off sound log tracks
         import xSndLogTracks
