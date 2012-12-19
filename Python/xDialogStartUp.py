@@ -43,6 +43,7 @@ You can contact Cyan Worlds, Inc. by email legal@cyan.com
 
 from Plasma import *
 from PlasmaTypes import *
+from PlasmaKITypes import *
 from PlasmaConstants import *
 from PlasmaNetConstants import *
 
@@ -105,6 +106,11 @@ k6NameID            = 602
 k6MaleID            = 603
 k6FemaleID          = 604
 
+##Timer
+kAnimTimer = 1
+kMovementTimer = 2
+kInitTimer = 3
+
 ##Other
 kMinusExplorer      = 204
 kExp_Buttons        = [k4bPlayer01,k4bPlayer02,k4bPlayer03,k4bPlayer04,k4bPlayer05]
@@ -134,7 +140,8 @@ class xDialogStartUp(ptResponder):
         gSelectedSlot = k4bPlayer01
         self.InitPlayerList()
         PtGetControlEvents(True,self.key)
-        PtAtTimeCallback(self.key,0.5,3)
+        PtSendKIMessage(kDisableKIandBB,0)
+        PtAtTimeCallback(self.key,0.5,kInitTimer)
 
     #################################
     def BeginAgeUnload(self, avatar):
@@ -297,6 +304,9 @@ class xDialogStartUp(ptResponder):
         if (controlKey == PlasmaControlKeys.kKeyExitMode):
             PtYesNoDialog(self.key,"Are you sure you want to quit?")
 
+        if not gExplorerScreen:
+            return
+
         elif (controlKey == PlasmaControlKeys.kKeyJump):
             if gSelectedSlot:
                 print "Player selected."
@@ -307,30 +317,27 @@ class xDialogStartUp(ptResponder):
                 respSFXLink.run(self.key)
                 PtSetActivePlayer(playerID)
 
-        if not gExplorerScreen:
-            return
-
         elif ((controlKey == PlasmaControlKeys.kKeyMoveForward) and (gSelectedSlot > k4bPlayer01)):
             self.SelectSlot(gSelectedSlot - 1)
             PtGetControlEvents(False,self.key)
-            PtAtTimeCallback(self.key, 0.5, 1)
+            PtAtTimeCallback(self.key, 0.5, kAnimTimer)
 
         elif ((controlKey == PlasmaControlKeys.kKeyMoveBackward) and (gSelectedSlot < k4bPlayer01+len(gPlayerList)-1)):
             self.SelectSlot(gSelectedSlot + 1)
             PtGetControlEvents(False,self.key)
-            PtAtTimeCallback(self.key, 0.5, 1)
+            PtAtTimeCallback(self.key, 0.5, kAnimTimer)
 
     ######################
     def OnTimer(self, id):
-        if (id == 1):
+        if (id == kAnimTimer):
             PtGetControlEvents(True,self.key)
 
-        elif (id == 2):
+        elif (id == kMovementTimer):
             PtDisableMovementKeys()
 
-        elif (id == 3):
+        elif (id == kInitTimer):
             PtGetLocalAvatar().avatar.loadClothingFromFile(str(gPlayerList[0][1]) + ".clo")
-            PtAtTimeCallback(self.key, 0.1, 2) #Disable movement keys after possible avatar change
+            PtAtTimeCallback(self.key, 0.1, kMovementTimer) #Disable movement keys after possible avatar change
 
     #####################################################
     def OnAccountUpdate(self, opType, result, playerInt):
@@ -442,6 +449,8 @@ class xDialogStartUp(ptResponder):
 
     ########################################
     def ActivatePlayerButtons(self, toggle):
+        global gExplorerScreen
+
         gExplorerScreen = toggle
 
         for tagID in kExp_Buttons:
@@ -491,8 +500,9 @@ class xDialogStartUp(ptResponder):
             self.ToggleSelect(tagID, True)
             id = gPlayerList[gSelectedSlot-kMinusExplorer][1]
             PtGetLocalAvatar().avatar.loadClothingFromFile(str(id) + ".clo")
-            PtAtTimeCallback(self.key, 0.1, 2) #Disable movement keys after possible avatar change
+            PtAtTimeCallback(self.key, 0.1, kMovementTimer) #Disable movement keys after possible avatar change
 
+    ##################################
     def ToggleSelect(self, tagID, on):
         if (tagID == 0):
             return
