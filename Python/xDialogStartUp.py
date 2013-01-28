@@ -88,6 +88,7 @@ k4bPlayer04         = 207
 k4bPlayerTxt04      = 217
 k4bPlayer05         = 208
 k4bPlayerTxt05      = 218
+k4bVersionID        = 219
 
 ##Delete Dialog
 k4cYesID            = 300
@@ -136,6 +137,14 @@ class xDialogStartUp(ptResponder):
     ###############################
     def OnServerInitComplete(self):
         global gSelectedSlot
+        ###Display Version if available###
+        try:
+            file = open("version.txt", "r")
+        except:
+            ptGUIControlTextBox(GUIDiag4b.dialog.getControlFromTag(k4bVersionID)).hide()
+        else:
+            version = file.readline()
+            ptGUIControlTextBox(GUIDiag4b.dialog.getControlFromTag(k4bVersionID)).setString(version)
         
         gSelectedSlot = k4bPlayer01
         self.InitPlayerList()
@@ -179,6 +188,8 @@ class xDialogStartUp(ptResponder):
                         print "Setting active player."
                         respSFXLink.run(self.key)
                         PtSetActivePlayer(playerID)
+                        self.ActivatePlayerButtons(0)
+                        PtShowDialog("GUIDialog06a")
 
                 elif (tagID == k4bQuitID): #Quit
                     PtYesNoDialog(self.key,"Are you sure you want to quit?")
@@ -315,6 +326,8 @@ class xDialogStartUp(ptResponder):
                 playerID = gPlayerList[gSelectedSlot-kMinusExplorer][1]
                 print "Setting active player."
                 respSFXLink.run(self.key)
+                PtShowDialog("GUIDialog06a")
+                self.ActivatePlayerButtons(0)
                 PtSetActivePlayer(playerID)
 
         elif ((controlKey == PlasmaControlKeys.kKeyMoveForward) and (gSelectedSlot > k4bPlayer01)):
