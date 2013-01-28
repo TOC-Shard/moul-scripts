@@ -70,12 +70,14 @@ class stupStartUp(ptResponder):
         PtLoadDialog("GUIDialog04c")
         PtLoadDialog("GUIDialog04d")
         PtLoadDialog("GUIDialog06")
+        PtLoadDialog("GUIDialog06a")
 
     def __del__(self):
         PtUnloadDialog("GUIDialog04b")
         PtUnloadDialog("GUIDialog04c")
         PtUnloadDialog("GUIDialog04d")
         PtUnloadDialog("GUIDialog06")
+        PtUnloadDialog("GUIDialog06a")
 
     ###########################
     def OnServerInitComplete(self):
