@@ -137,7 +137,14 @@ sQuitBehavior = ptAttribBehavior(56,"n quit behavior")
 nPanelSound = ptAttribResponder(57,"n panel sound",['main','up','down','select','blockerOn','blockerOff','gameStart','denied'],netForce=1)
 sPanelSound = ptAttribResponder(58,"s panel sound",['main','up','down','select','blockerOn','blockerOff','gameStart','denied'],netForce=1)
 
+######################
 
+LightS = ptAttribMaterialAnimation(61,"LightS")
+LightN = ptAttribMaterialAnimation(62,"LightN")
+LightSitN = ptAttribSceneobjectList(63, "LightSitN")
+LightSitS = ptAttribSceneobjectList(64, "LightSitS")
+LightReadyN = ptAttribSceneobjectList(65, "LightReadyN")
+LightReadyS = ptAttribSceneobjectList(66, "LightReadyS")
 
 ##############################################################
 # grsnWallPython
@@ -540,6 +547,8 @@ class grsnWallPython(ptResponder):
         ageSDL.sendToClients("sBlockerChange")
         ageSDL.sendToClients("northWall")
         ageSDL.sendToClients("southWall")
+        self.LightPanal()
+        
 
         if (solo):
             ageSDL["northWall"] = (-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,)
@@ -601,6 +610,7 @@ class grsnWallPython(ptResponder):
             on = ageSDL[VARname][1]
             self.SetWallIndex(index,on,team)
             self.ChangeSouthBlocker(index)
+        self.LightPanal()
             
     
     def UpdateBlockerCountDisplay(self,flash):
@@ -925,6 +935,7 @@ class grsnWallPython(ptResponder):
                         print"standing up from south chair"
                         southChair.enable()
                         ageSDL.setIndex("sChairOccupant",0,-1)
+                        self.LightPanal()
                             
                     return            
                             
@@ -951,6 +962,7 @@ class grsnWallPython(ptResponder):
                         print"standing up from north chair"
                         northChair.enable()
                         ageSDL.setIndex("nChairOccupant",0,-1)
+                        self.LightPanal()
                             
                     return            
                             
@@ -1261,3 +1273,90 @@ class grsnWallPython(ptResponder):
                         #SouthCount = numSelected
                         #self.SetWallIndex(index,false,false)
                         self.ChangeBlockerState(false,index,false)
+
+    def LightPanal(self):
+        global NorthState
+        global SouthState
+        
+        ageSDL = PtGetAgeSDL()
+        nSit = ageSDL["nChairOccupant"][0]
+        sSit = ageSDL["sChairOccupant"][0]
+        
+        LightS.animation.speed(1)
+        LightS.animation.stop()
+        LightS.animation.skipToTime(0.16)
+        LightN.animation.speed(1)
+        LightN.animation.stop()
+        LightN.animation.skipToTime(0.16)
+        
+        if NorthState == 0 or SouthState == 0:
+            i = 0
+            while i < 2:
+                LightSitN.value[i].draw.disable()
+                LightSitS.value[i].draw.disable()
+                LightReadyN.value[i].draw.disable()
+                LightReadyS.value[i].draw.disable()
+                i = i + 1
+        if NorthState == 3 or SouthState == 4:
+            LightS.animation.play()
+            LightN.animation.play()
+
+        if nSit > -1:
+            i = 0
+            while i < 2:
+                LightSitN.value[i].draw.enable()
+                i = i + 1
+        else:
+            i = 0
+            while i < 2:
+                LightSitN.value[i].draw.disable()
+                i = i + 1
+
+        if sSit > -1:
+            i = 0
+            while i < 2:
+                LightSitS.value[i].draw.enable()
+                i = i + 1
+        else:
+            i = 0
+            while i < 2:
+                LightSitS.value[i].draw.disable()
+                i = i + 1
+
+        if NorthState > 6 and NorthState < 10:
+            i = 0
+            while i < 2:
+                LightReadyN.value[i].draw.enable()
+                i = i + 1
+        else:
+            i = 0
+            while i < 2:
+                LightReadyN.value[i].draw.disable()
+                i = i + 1
+            
+        if SouthState > 7 and SouthState < 11:
+            i = 0
+            while i < 2:
+                LightReadyS.value[i].draw.enable()
+                i = i + 1
+        else:
+            i = 0
+            while i < 2:
+                LightReadyS.value[i].draw.disable()
+                i = i + 1
+
+        if NorthState == 9:
+            LightN.animation.speed(0.25)
+            LightN.animation.play()
+            i = 0
+            while i < 2:
+                LightReadyS.value[i].draw.disable()
+                i = i + 1
+            
+        if SouthState == 10:
+            LightS.animation.speed(0.25)
+            LightS.animation.play()
+            i = 0
+            while i < 2:
+                LightReadyN.value[i].draw.disable()
+                i = i + 1
