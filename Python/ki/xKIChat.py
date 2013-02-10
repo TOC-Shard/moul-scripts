@@ -57,6 +57,9 @@ import xKIExtChatCommands
 from xKIConstants import *
 from xKIHelpers import *
 
+# Offline KI
+import xUserKI
+
 
 ## A class to process all the RT Chat functions of the KI.
 class xKIChat(object):
@@ -169,7 +172,7 @@ class xKIChat(object):
     ## Sends a chat message appropriately to other players.
     # A broadcast message gets sent to everyone in the Age (purple header), a
     # private message is sent to one player (yellow header), and so on.
-    def SendMessage(self, message):
+    def SendMessage(self, message, silent = false):
 
         # Set up the chat message's flags.
         cFlags = ChatFlags(0)
@@ -193,7 +196,7 @@ class xKIChat(object):
             self.AddChatLine(None, PtGetLocalizedString("KI.Errors.TextOnly"), kChat.SystemMessage)
 
         # Check for special commands.
-        message = self.commandsProcessor(message)
+        message = self.commandsProcessor(message, silent)
         if not message:
             return
         msg = message.lower()
@@ -466,7 +469,10 @@ class xKIChat(object):
             elif cFlags.admin:
                 if cFlags.private:
                     headerColor = kColors.ChatHeaderError
-                    pretext = PtGetLocalizedString("KI.Chat.PrivateMsgRecvd")
+                    if cFlags.toSelf:
+                        pretext = PtGetLocalizedString("KI.Chat.PrivateSendTo")
+                    else:
+                        pretext = PtGetLocalizedString("KI.Chat.PrivateMsgRecvd")
                     forceKI = True
                 else:
                     headerColor = kColors.ChatHeaderAdmin
@@ -583,6 +589,9 @@ class xKIChat(object):
             if len(plyrList) > 0:
                 PtSendRTChat(PtGetLocalPlayer(), plyrList, statusMessage, cFlags.flags)
         self.AddChatLine(None, statusMessage, cFlags)
+
+    def DisplayErrorMessage(self, errorMessage):
+        self.AddChatLine(None, errorMessage, kChat.SystemMessage)
 
     ###########
     # Players #
@@ -757,7 +766,7 @@ class CommandsProcessor:
     ## Called when the processor needs to process a message.
     # Returns the appropriate message and performs all the necessary operations
     # to apply the command.
-    def __call__(self, message):
+    def __call__(self, message, silent = false):
 
         msg = message.lower()
 
@@ -797,6 +806,8 @@ class CommandsProcessor:
 
         # Is it an emote, a "/me" or invalid command?
         if message.startswith("/"):
+            if xUserKI.OnCommand(self.chatMgr, message[1:], silent):
+                return None
             words = message.split()
             try:
                 emote = xKIExtChatCommands.xChatEmoteXlate[unicode(words[0][1:].lower())]
@@ -812,7 +823,7 @@ class CommandsProcessor:
                     statusMsg = PtGetLocalizedString(emote[1], [PtGetLocalPlayer().getPlayerName(), hisHer])
                 else:
                     statusMsg = PtGetLocalizedString(emote[1], [PtGetLocalPlayer().getPlayerName()])
-                self.chatMgr.DisplayStatusMessage(statusMsg, 1)
+                if not silent: self.chatMgr.DisplayStatusMessage(statusMsg, 1)
                 message = message[len(words[0]):]
                 if message == "":
                     return None

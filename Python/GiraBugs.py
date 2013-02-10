@@ -48,6 +48,7 @@ Age: Gira
 from Plasma import *
 from PlasmaTypes import *
 from PlasmaConstants import *
+import xUserKIMystler
 
 water01 = ptAttribActivator(1,"water 01")
 water02 = ptAttribActivator(2,"water 02")
@@ -85,6 +86,10 @@ class GiraBugs(ptResponder):
         self.id = 53627
         self.version = 2
         self.bugCount = 0
+        xUserKIMystler.GiraBugs = self
+
+    def GetParticleSystem(self):
+        return particleSystem
     
     def ISaveBugCount(self, count):
         vault = ptVault()

@@ -50,6 +50,7 @@ Author: Derek Odell
 from Plasma import *
 from PlasmaTypes import *
 import random
+import xUserKIMystler
 
 # define the attributes that will be entered in max
 respBahroSymbol         = ptAttribResponder(1, "resp: Bahro Symbol", ["beginning","middle","end"], netForce=1)
@@ -85,6 +86,11 @@ class xPodBahroSymbol(ptResponder):
         self.version = version
         print "__init__xPodBahroSymbol v.", version,".0"
         random.seed()
+        xUserKIMystler.PodSymbol = self
+
+    def StartSymbol(self):
+        respBahroSymbol.run(self.key, state='beginning')
+        respSFX.run(self.key, state='play')
 
     ###########################
     def OnServerInitComplete(self):

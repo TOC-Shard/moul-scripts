@@ -62,6 +62,8 @@ import os   #used for saving pictures locally
 import xACAItems
 import xVisitorUtils
 
+import xUserKIConfig
+
 # define the attributes that will be entered in max
 InRoomActivator         = ptAttribActivator(1, "In the Room Activator")
 AvCustGUI               = ptAttribGUIDialog(2,"The AvatarCustomizaion GUI")
@@ -495,6 +497,7 @@ def CanShowClothingItem(clothingItem):
     return false
 
 def ItemInWardrobe(clothingItem):
+    if xUserKIConfig.IsAdmin(): return 1
     avatar = PtGetLocalAvatar()
     clothingList = avatar.avatar.getWardrobeClothingList()
     for item in clothingList:

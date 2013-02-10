@@ -54,6 +54,7 @@ from PlasmaGame import *
 from PlasmaGameConstants import *
 
 import random
+import xUserKIMystler
 
 # define the attributes that will be entered in max
 clkBSDoor               = ptAttribActivator(1, "clk: BS Door")
@@ -120,6 +121,11 @@ class xBlueSpiral(ptResponder):
         self.gameId = 0 # DIFFERENT from table id. This is the actual ID number of the game, table ID is simply a way to get a game without knowing its gameID
         print "xBlueSpiral: init  version = %d" % self.version
         random.seed()
+        xUserKIMystler.BlueSpiral = self
+
+    def WinGame(self):
+        respBSDoorOps.run(self.key, state="open")
+        respBSSymbolSpin.run(self.key, state="fwdstop")
 
     ###########################
     def OnFirstUpdate(self):

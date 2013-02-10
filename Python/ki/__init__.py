@@ -80,6 +80,11 @@ import xKIChat
 from xKIConstants import *
 from xKIHelpers import *
 
+# OfflineKI
+import xUserKI
+kUserKITimerIdStart = 3000
+kUserKITimerIdEnd = 3999
+
 # Define the attributes that will be entered in Max.
 KIBlackbar = ptAttribGUIDialog(1, "The Blackbar dialog")
 xKIChat.KIBlackbar = KIBlackbar
@@ -277,6 +282,12 @@ class xKI(ptModifier):
         ## The chatting manager.
         self.chatMgr = xKIChat.xKIChat(self.StartFadeTimer, self.KillFadeTimer, self.FadeCompletely)
 
+        xUserKI.KIManager = self
+        xUserKI.OnEarlyInit(self.chatMgr)
+
+    def OnControlKeyEvent(self, controlKey, activeFlag):
+        xUserKI.OnControlKey(self.chatMgr, controlKey, activeFlag)
+
     ## Unloads any loaded dialogs upon exit.
     def __del__(self):
 
@@ -382,6 +393,9 @@ class xKI(ptModifier):
         logoutButton = ptGUIControlButton(KIYesNo.dialog.getControlFromTag(kGUI.YesNoLogoutButtonID))
         logoutButton.hide()
 
+        import xBlackList
+        xBlackList.removeData()
+
     ## Called by Plasma when the player updates his account.
     # This includes switching avatars and changing passwords. Because the KI
     # gets started at initial load time, the KI needs to be re-initialized once
@@ -437,6 +451,14 @@ class xKI(ptModifier):
             KIJalakMiniIconOn.run(self.key, state="off", netPropagate=0, fastforward=1)
             ptGUIControlButton(KIMini.dialog.getControlFromTag(kJalakMiniIconBtn)).disable()
             ptGUIControlButton(KIMini.dialog.getControlFromTag(kJalakMiniIconBtn)).hide()
+        xUserKI.OnNewAgeLoaded(self.chatMgr)
+
+    def OnBehaviorNotify(self, type, id, state):
+        if ((type == PtBehaviorTypes.kBehaviorTypeLinkOut) and state):
+            xUserKI.OnLinkingOut(self.chatMgr)
+
+    def OnAvatarSpawn(self, null):
+        xUserKI.OnAvatarSpawn(self.chatMgr)
 
     ## Called by Plasma when the avatar is linked out of an Age.
     # Depending on the Age the avatar was linking out, the Jalak GUI will be
@@ -477,6 +499,8 @@ class xKI(ptModifier):
                 if isDown and not isCtrl and not isRepeat:
                     if not self.KIDisabled and not PtIsEnterChatModeKeyBound():
                         self.chatMgr.ToggleChatMode(1, firstChar=ch)
+        elif isDown:
+            xUserKI.OnDefaultKey(self.chatMgr, isShift, isCtrl, keycode)
 
     ## Called by Plasma on receipt of a plNotifyMsg.
     # This big function deals with the various responses sent upon a triggered
@@ -1258,6 +1282,8 @@ class xKI(ptModifier):
         # Turn on the Jalak GUI buttons.
         elif ID == kTimers.JalakBtnDelay:
             self.SetJalakGUIButtons(1)
+        elif ((ID >= kUserKITimerIdStart) and (ID <= kUserKITimerIdEnd)):
+            xUserKI.OnTimer(self.chatMgr, ID)
 
     ## Called by Plasma when a screen capture is done.
     # This gets called once the screen capture is performed and ready to be
@@ -1321,6 +1347,7 @@ class xKI(ptModifier):
         PtDebugPrint(u"xKI.OnMemberUpdate(): Refresh player list.", level=kDebugDumpLevel)
         if PtIsDialogLoaded("KIMini"):
             self.RefreshPlayerList()
+        xUserKI.OnMemberUpdate(self.chatMgr)
 
     ## Called by Plasma when a new player is selected in the player list.
     def OnRemoteAvatarInfo(self, player):

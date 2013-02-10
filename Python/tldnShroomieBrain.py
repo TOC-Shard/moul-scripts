@@ -51,6 +51,7 @@ Controls the appearance and behavior of Shroomie
 from Plasma import *
 from PlasmaTypes import *
 import random
+import xUserKIMystler
 
 # define the attributes that will be entered in max
 actLever = ptAttribActivator(1, "act: Feeder Lever")
@@ -114,6 +115,7 @@ class tldnShroomieBrain(ptResponder):
         self.version = version
         print "__init__tldnShroomieBrain v.", version,".2"
         random.seed()
+        xUserKIMystler.tldnShroomieBrain = self
 
     def OnServerInitComplete(self):
         try:
@@ -199,6 +201,18 @@ class tldnShroomieBrain(ptResponder):
         else:
             print "\tShroomie WON'T be seen."
             
+    def ShroomieKISpawn(self):
+        respVisible.run(self.key)
+        whichbehavior = random.randint(1, 4)
+        pos = ShroomieMaster.sceneobject.position()
+        matrix = ShroomieMaster.sceneobject.getLocalToWorld()
+        matrix.translate(ptVector3((-483.27 - pos.getX()), (226.81 - pos.getY()), (6.04 - pos.getZ())))
+        ShroomieMaster.sceneobject.netForce(1)
+        ShroomieMaster.sceneobject.physics.warp(matrix)
+        ShroomieMaster.sceneobject.netForce(0)
+        code = (('respTrick0' + str(whichbehavior)) + '.run(self.key)')
+        exec code
+
     def ShroomieSurfaces(self,spawn):
         ageSDL = PtGetAgeSDL()
 
