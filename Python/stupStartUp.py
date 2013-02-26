@@ -61,57 +61,44 @@ class stupStartUp(ptResponder):
     def __init__(self):
         ptResponder.__init__(self)
         self.id = 5339
-        self.version = 1
+        self.version = 2
         print "stupStartUp: init  version = %d" % self.version
 
     ###########################
     def OnFirstUpdate(self):
-        PtLoadDialog("GUIDialog04a")
         PtLoadDialog("GUIDialog04b")
         PtLoadDialog("GUIDialog04c")
         PtLoadDialog("GUIDialog04d")
-        PtLoadDialog("GUIDialog05")
         PtLoadDialog("GUIDialog06")
         PtLoadDialog("GUIDialog06a")
 
-
     def __del__(self):
-        PtUnloadDialog("GUIDialog04a")
         PtUnloadDialog("GUIDialog04b")
         PtUnloadDialog("GUIDialog04c")
         PtUnloadDialog("GUIDialog04d")
-        PtUnloadDialog("GUIDialog05")
         PtUnloadDialog("GUIDialog06")
         PtUnloadDialog("GUIDialog06a")
-
 
     ###########################
     def OnServerInitComplete(self):
         if PtIsActivePlayerSet():
             PtSetActivePlayer(0)
-        
+
         avatar = PtGetLocalAvatar()
         avatar.physics.suppress(true)
-        
+        PtDisableMovementKeys()
+
         cam = ptCamera()
         cam.undoFirstPerson()
         cam.disableFirstPersonOverride()
 
         virtCam = ptCamera()
         virtCam.save(Camera.sceneobject.getKey())
-        
-        playerList = PtGetAccountPlayerList()
 
-        if PtIsSubscriptionActive():
-            print "stupStartUp: Paying customer"
-            if playerList[0] or len(playerList) > 1:
-                PtShowDialog("GUIDialog04b")
-            else:
-                PtShowDialog("GUIDialog06")
-        else:
-            print "stupStartUp: Visitor"
-            if playerList[0] or len(playerList) > 1:
-                PtShowDialog("GUIDialog04a")
-            else:
-                PtShowDialog("GUIDialog06")
-                
+        playerList = PtGetAccountPlayerList()
+        PtShowDialog("GUIDialog04b")
+
+        if ((playerList[0]) or (len(playerList) <= 1)):
+            PtShowDialog("GUIDialog4b")
+            PtShowDialog("GUIDialog06")
+            PtGetLocalAvatar().draw.disable()
