@@ -617,6 +617,13 @@ def OnCommand(ki, arg, cmnd, args, playerList, silent):
         ageLink.setSpawnPoint(spawnInfo)
         ptNetLinkingMgr().linkToAge(ageLink)
         return True
+    if cmnd == 'greenscreen':
+        if os.path.isfile("dat/ScreenAge.age"):
+            ki.AddChatLine(None, "Linking you to your greenscreen age!", 0)
+            PtLinkToAge("ScreenAge")
+        else:
+            ki.DisplayErrorMessage("You do not have the greenscreen age!")
+        return True
     if cmnd == 'attack':
         (valid, target,) = xUserKI.GetArg(ki, cmnd, args, 'target', lambda args:(len(args) == 1),
             lambda args:xUserKI.GetPlayer(ki, args[0], playerList))
