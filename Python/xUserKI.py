@@ -204,7 +204,7 @@ def GetPlayers(ki, names, playerList, thisAgeOnly = False):
 
 def GetSDL(varname, index):
     sdl = PtGetAgeSDL()
-    return sdl[varname][index]
+    return sdl[str(varname)][index]
 
 
 def SetSDL(varname, index, value):
