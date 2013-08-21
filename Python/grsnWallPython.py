@@ -47,11 +47,6 @@ from PlasmaKITypes import *
 from PlasmaGame import *
 from PlasmaGameConstants import *
 
-# for save/load
-import cPickle
-
-## COMMENTED OUT by Jeff due to the re-write in the garrison wall
-
 ##############################################################
 # define the attributes/parameters that we need from the 3dsMax scene
 ##############################################################
@@ -972,7 +967,7 @@ class grsnWallPython(ptResponder):
 
         elif id == goButtonS.id:
             print"picked s go button"
-            if (southState == kSouthSit):
+            if (southState == kSouthSit and northState == kNorthSit):
                 print"reset blocker physics (south)"
                 i = 0 #reset Wall Physics
                 while i<171:
@@ -1013,7 +1008,7 @@ class grsnWallPython(ptResponder):
 
         elif id == goButtonN.id:
             print"picked n go button"
-            if (northState == kNorthSit):
+            if (northState == kNorthSit and southState == kSouthSit):
                 print"reset blocker physics (north)"
                 i = 0 #reset Wall Physics
                 while i<171:
@@ -1032,7 +1027,7 @@ class grsnWallPython(ptResponder):
                 ageSDL["northWall"] = (-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,)
                 ageSDL["southWall"] = (-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,)
                 if (southState == kWaiting or southState == kSouthSit or \
-                    southState == kSouthWin or southState == kSouthWin):
+                    southState == kSouthWin or southState == kSouthQuit):
                     self.ChangeGameState(kSouthSelect)
                     #ageSDL.setIndex("sChairState",0,kSouthSelect)
                     print"force south chair to keep up"

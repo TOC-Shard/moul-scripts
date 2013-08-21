@@ -89,3 +89,5 @@ Page=TrnCtrControlRoom02,29,1
 Page=WallRoom,7,1
 Page=WellWindowFake,83,1
 Page=Wallhelp,100,1
+Page=WallCamP,101
+Page=WallCamY,102
