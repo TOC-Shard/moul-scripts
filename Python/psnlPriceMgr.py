@@ -8,7 +8,7 @@ Game = ptAttribString(2, "Game") #Pellet, Heek, Wall
 
 
 PelletWinners = [21329] #insert KI# of winner(s)
-HeekWinners = [15942] #insert KI# of winners(s)
+HeekWinners = [15942, 87716] #insert KI# of winners(s)
 WallWinners = [3349, 103367]
 
 
