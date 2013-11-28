@@ -51,6 +51,7 @@ from Plasma import *
 from PlasmaTypes import *
 from PlasmaKITypes import *
 import string
+import time
 
 
 kEmptyGuid = '0000000000000000'
@@ -138,6 +139,7 @@ class Personal(ptResponder):
 
 
     def OnServerInitComplete(self):
+        self.WinterSEE()
         ageSDL = PtGetAgeSDL()
         PtDebugPrint("Personal.OnServerInitComplete(): Grabbing first week clothing item boolean")
         try:
@@ -249,4 +251,13 @@ class Personal(ptResponder):
         pass
 
 
-
+    def WinterSEE(self):
+        dnitime = PtGetDniTime()
+        dayNum = int(time.strftime('%d', time.gmtime(dnitime)))
+        monthNum = int(time.strftime('%m', time.gmtime(dnitime)))
+        if monthNum in [1,12]:
+            PtDebugPrint('Winter is - enabled')
+            pages = ["xMas"]
+            PtPageInNode(pages)
+        else:
+            PtDebugPrint('Winter is - disabled')
