@@ -249,7 +249,6 @@ def OnTimer(ki, id): # called by xUserKI
 
 
 def OnNewAgeLoaded(ki, firstAge):
-    if not xUserKIConfig.IsAdmin(): return
     AgeName = PtGetAgeName()
     vault = ptVault()
     if type(vault) != type(None):
@@ -265,7 +264,8 @@ def OnNewAgeLoaded(ki, firstAge):
                     'GlobalAnimations',
                     'GlobalClothing',
                     'GlobalAvatars',
-                    'GlobalMarkers']):
+                    'GlobalMarkers',
+                    'Nexus']):
                     player = PtGetLocalPlayer()
                     playerKey = PtGetAvatarKeyFromClientID(player.getPlayerID())
                     avatar = playerKey.getSceneObject()
@@ -554,7 +554,8 @@ def OnCommand(ki, arg, cmnd, args, playerList, silent):
                                 'GlobalAnimations',
                                 'GlobalClothing',
                                 'GlobalAvatars',
-                                'GlobalMarkers']):
+                                'GlobalMarkers',
+                                'Nexus']):
                                 player = PtGetLocalPlayer()
                                 playerKey = PtGetAvatarKeyFromClientID(player.getPlayerID())
                                 avatar = playerKey.getSceneObject()
@@ -594,7 +595,8 @@ def OnCommand(ki, arg, cmnd, args, playerList, silent):
                         'GlobalAnimations',
                         'GlobalClothing',
                         'GlobalAvatars',
-                        'GlobalMarkers']):
+                        'GlobalMarkers',
+                        'Nexus']):
                         player = PtGetLocalPlayer()
                         playerKey = PtGetAvatarKeyFromClientID(player.getPlayerID())
                         avatar = playerKey.getSceneObject()

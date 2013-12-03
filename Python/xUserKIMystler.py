@@ -11,6 +11,23 @@ import xUserKI
 import xUserKIConfig
 
 def OnCommand(ki, arg, cmnd, args, playerList, silent):
+    if cmnd == 'linkanim':
+        (valid, activate,) = xUserKI.GetArg(ki, cmnd, args, '0|1', lambda args:(len(args) == 1), lambda args:args[0])
+        if not valid:
+            return True
+        if (activate in ['0', '1']):
+            vault = ptVault()
+            if type(vault) != type(None):
+                entry = vault.findChronicleEntry("DestinyLinkAnim")
+                if type(entry) == type(None):
+                    vault.addChronicleEntry("DestinyLinkAnim", 0, activate)
+                else:
+                    entry.chronicleSetValue(activate)
+                    entry.save()
+            ki.DisplayStatusMessage(('You have set the TOC Link animation to %s' % activate), netPropagate=0)
+        else:
+            ki.DisplayStatusMessage('You have to use /linkanim 0 or 1', netPropagate=0)
+        return True
     if not xUserKIConfig.IsAdmin(): return False
     if cmnd == 'assassinate':
         ki.DisplayStatusMessage(('OMG! %s is assassinating %s' % (PtGetClientName(), arg)))
@@ -121,23 +138,6 @@ def OnCommand(ki, arg, cmnd, args, playerList, silent):
             ki.DisplayStatusMessage('%s got the Bugs... HAAAAAAAAX!' % avatarName)
         else:
             ki.DisplayStatusMessage('You have to be in Eder Gira!', netPropagate=0)
-        return True
-    if cmnd == 'linkanim':
-        (valid, activate,) = xUserKI.GetArg(ki, cmnd, args, '0|1', lambda args:(len(args) == 1), lambda args:args[0].lower())
-        if not valid:
-            return True
-        if (activate in ['0', '1']):
-            vault = ptVault()
-            if type(vault) != type(None):
-                entry = vault.findChronicleEntry("DestinyLinkAnim")
-                if type(entry) == type(None):
-                    vault.addChronicleEntry("DestinyLinkAnim",0,activate)
-                else:
-                    entry.chronicleSetValue(activate)
-                    entry.save()
-            ki.DisplayStatusMessage(('You set DestinyLinkAnim to %s' % activate), netPropagate=0)
-        else:
-            ki.DisplayStatusMessage('You have to use /linkanim 0 or 1', netPropagate=0)
         return True
     if cmnd == 'getwedges':
         AgeName = PtGetAgeName()
