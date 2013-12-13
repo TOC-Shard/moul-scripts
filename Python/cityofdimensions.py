@@ -9,6 +9,13 @@ import string
 
 sdlBahroShout = ["islmBahroShoutLibraryRun","islmBahroShoutPalaceRun","islmBahroShoutFerryRun"]
 
+sdlS1FinaleBahro = [    "islmS1FinaleBahroCity1","islmS1FinaleBahroCity2",\
+                            "islmS1FinaleBahroCity3","islmS1FinaleBahroCity4","islmS1FinaleBahroCity5",\
+                            "islmS1FinaleBahroCity6"]
+pagesS1FinaleBahro = [    "TOC_bahroFlyers_city1","TOC_bahroFlyers_city2",\
+                            "TOC_bahroFlyers_city3","TOC_bahroFlyers_city4","TOC_bahroFlyers_city5",\
+                            "TOC_bahroFlyers_city6"]
+
 EventTime = 3600
 
 class cityofdimensions(ptResponder):
@@ -31,7 +38,20 @@ class cityofdimensions(ptResponder):
             psnlSDL["GPSEnabled"] = (1,)
         except:
             pass
-
+        
+        try:
+            ageSDL = PtGetAgeSDL()
+            n = 0
+            for sdl in sdlS1FinaleBahro:
+                ageSDL.setFlags(sdl,1,1)
+                ageSDL.sendToClients(sdl)
+                ageSDL.setNotify(self.key,sdl,0.0)
+                val = ageSDL[sdl][0]
+                if val:
+                    self.ILoadS1FinaleBahro(n,1)
+                n += 1
+        except:
+            print "ERROR!  Couldn't find all Bahro sdl, leaving default = 0"
     def Load(self):
         pass
 
@@ -80,3 +100,42 @@ class cityofdimensions(ptResponder):
         timeLeft += 1
         PtAtTimeCallback(self.key, timeLeft, 2)
         PtDebugPrint('Next Bahro Show starts in %d seconds' % timeLeft)
+
+        
+        
+    def OnSDLNotify(self,VARname,SDLname,playerID,tag):
+        ageSDL = PtGetAgeSDL()
+        PtDebugPrint("cityofdimensions.OnSDLNotify():\t VARname: %s, SDLname: %s, tag: %s, value: %d" % (VARname,SDLname,tag,ageSDL[VARname][0]))
+
+        if VARname in sdlS1FinaleBahro:
+#            if not self.sceneobject.isLocallyOwned():
+#                return
+            id = sdlS1FinaleBahro.index(VARname)
+            val = ageSDL[sdlS1FinaleBahro[id]][0]
+            self.ILoadS1FinaleBahro(id,val)
+
+
+    def ILoadS1FinaleBahro(self,bahro,state):
+        print "cityofdimensions.ILoadS1FinaleBahro(): bahro = %d, load = %d" % (bahro,state)
+#        if not self.sceneobject.isLocallyOwned():
+#            return
+        if state:
+            PtPageInNode(pagesS1FinaleBahro[bahro])
+        else:
+            PtPageOutNode(pagesS1FinaleBahro[bahro])
+
+
+    def OnBackdoorMsg(self, target, param):
+        if target == "s1finale":
+            if param == "on" or param == "1":
+                n = 0
+                for p in pagesS1FinaleBahro:
+                    self.ILoadS1FinaleBahro(n,1)
+                    n += 1
+            elif param == "off" or param == "0":
+                n = 0
+                for p in pagesS1FinaleBahro:
+                    self.ILoadS1FinaleBahro(n,0)
+                    n += 1
+        elif target == "bahroshout":
+            PtAtTimeCallback(self.key, 0, 1)
