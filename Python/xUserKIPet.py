@@ -19,8 +19,8 @@ def OnCommand(ki, arg, cmnd, args, playerList, silent):
         elif (arg == 'Raven'):
             PetType = 'PetRaven'
         else:
-            ki.DisplayStatusMessage('Usage: /pet <Petname>', netPropagate=0)
-            ki.DisplayStatusMessage('Pets are: Cat, Raven', netPropagate=0)
+            ki.DisplayStatusMessage('Usage: /pet <Petname>', 0)
+            ki.DisplayStatusMessage('Pets are: Cat, Raven', 0)
             isvld = 0
         #set ChronicleValue
         if (isvld == 1):
@@ -38,9 +38,9 @@ def OnCommand(ki, arg, cmnd, args, playerList, silent):
                     PetTypel = PetType.split("t")
                     PetType = PetTypel[1]
                     if (PetType != oldValue):
-                        ki.DisplayStatusMessage('Your Pet changed from %s to %s' % (oldValue, PetType), netPropagate=0)
+                        ki.DisplayStatusMessage('Your Pet changed from %s to %s' % (oldValue, PetType), 0)
                     else:
-                        ki.DisplayStatusMessage('You already have the Pet %s' % PetType, netPropagate=0)
+                        ki.DisplayStatusMessage('You already have the Pet %s' % PetType, 0)
             else:
                 PtDebugPrint("ERROR xUserKIPet::PetType - Vault offline?")
         return True
@@ -57,7 +57,7 @@ def OnCommand(ki, arg, cmnd, args, playerList, silent):
         else:
             avatar.avatar.oneShot(playerKey, 1, 1, "MaleBarrelRoll", 0, 0)
         avatarName = PtGetClientName()
-        ki.DisplayStatusMessage("%s does a barrel roll!" % avatarName)
+        ki.DisplayStatusMessage("%s does a barrel roll!" % avatarName, 1)
         return True
 
 ######Other Commands#########
@@ -67,7 +67,7 @@ def OnCommand(ki, arg, cmnd, args, playerList, silent):
             psnlSDL = xPsnlVaultSDL.xPsnlVaultSDL()
             psnlSDL["GPSEnabled"] = (1,)
             if (not silent):
-                ki.DisplayStatusMessage('Your GPS is now enabled.', netPropagate=0)
+                ki.DisplayStatusMessage('Your GPS is now enabled.', 0)
         except:
             pass
         return True
@@ -87,9 +87,9 @@ def OnCommand(ki, arg, cmnd, args, playerList, silent):
             else:
                 entry.chronicleSetValue(arg)
                 entry.save()
-            ki.DisplayStatusMessage('Status of your Story participation: %s' % (arg), netPropagate=0)
+            ki.DisplayStatusMessage('Status of your Story participation: %s' % (arg), 0)
         else:
-            ki.DisplayStatusMessage('Usage: /story <on|off>', netPropagate=0)
+            ki.DisplayStatusMessage('Usage: /story <on|off>', 0)
 
         return True
     return False

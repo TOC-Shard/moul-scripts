@@ -187,7 +187,7 @@ def OnCommand(ki, arg, cmnd, args, playerList, silent):
         if (gender == 0): hisher = 'his'
         elif (gender == 1): hisher = 'her'
         else: hisher = 'the'
-        if not silent: ki.DisplayStatusMessage('%s is linking to %s neighborhood' % (PtGetClientName(), hisher))
+        if not silent: ki.DisplayStatusMessage('%s is linking to %s neighborhood' % (PtGetClientName(), hisher), 1)
         linkMgr = ptNetLinkingMgr()
         linkMgr.linkToMyNeighborhoodAge()
         return True
@@ -196,7 +196,7 @@ def OnCommand(ki, arg, cmnd, args, playerList, silent):
         if (gender == 0): hisher = 'his'
         elif (gender == 1): hisher = 'her'
         else: hisher = 'the'
-        if not silent: ki.DisplayStatusMessage('%s is linking to %s Nexus' % (PtGetClientName(), hisher))
+        if not silent: ki.DisplayStatusMessage('%s is linking to %s Nexus' % (PtGetClientName(), hisher), 1)
         PtLinkToAge("Nexus")
         return True
     # avatar movement
@@ -230,7 +230,7 @@ def OnCommand(ki, arg, cmnd, args, playerList, silent):
             newMat = ptMatrix44()
             newMat.translate(ptVector3(gLastSpawnPos[0], gLastSpawnPos[1], gLastSpawnPos[2])) # warp to that position, reset rotation etc. in case we come from a... strange subworld
             avatar.physics.warp(newMat)
-            if not silent: ki.DisplayStatusMessage('%s re-spawns to the starting point' % PtGetClientName())
+            if not silent: ki.DisplayStatusMessage('%s re-spawns to the starting point' % PtGetClientName(), 1)
         return True
     if (cmnd == 'spawn'):
         if xUserKIConfig.IsLockedAge():
@@ -271,7 +271,7 @@ def OnCommand(ki, arg, cmnd, args, playerList, silent):
         place = places[target]
         # warp to the place
         xUserKI.WarpObjectToPos(PtGetLocalAvatar(), place[0], place[1], place[2])
-        if not silent: ki.DisplayStatusMessage('%s warps to \'%s\'' % (PtGetClientName(), target))
+        if not silent: ki.DisplayStatusMessage('%s warps to \'%s\'' % (PtGetClientName(), target), 1)
         return True
     if (cmnd in ['float', 'nofloat']):
         if xUserKIConfig.IsLockedAge():
@@ -355,7 +355,7 @@ def OnCommand(ki, arg, cmnd, args, playerList, silent):
         avatar.netForce(1)
         if cmnd in ['fcol', 'fogcolor']:
             PtConsoleNet('Graphics.Renderer.Fog.SetDefColor %f %f %f' % (color.getRed(), color.getGreen(), color.getBlue()), 1)
-            if not silent: ki.DisplayStatusMessage('%s turns the fog %s' % (PtGetClientName(), colorName))
+            if not silent: ki.DisplayStatusMessage('%s turns the fog %s' % (PtGetClientName(), colorName), 1)
         elif cmnd == 'skincolor':
             avatar.avatar.tintSkin(color)
             avatar.avatar.saveClothing()
@@ -387,7 +387,7 @@ def OnCommand(ki, arg, cmnd, args, playerList, silent):
         if not valid: return True
         (start, end, density) = data
         PtConsoleNet('Graphics.Renderer.Fog.SetDefLinear %f %f %f' % (start, end, density), 1)
-        if not silent: ki.DisplayStatusMessage('%s changes the fog density (%1.2f %1.2f %1.2f)' % (PtGetClientName(), start, end, density))
+        if not silent: ki.DisplayStatusMessage('%s changes the fog density (%1.2f %1.2f %1.2f)' % (PtGetClientName(), start, end, density), 1)
         return True
     # camera control
     if (cmnd == 'stopcam'):
@@ -409,15 +409,15 @@ def OnCommand(ki, arg, cmnd, args, playerList, silent):
             if not valid: return True
             if what == 'Urwin':
                 xUserKI.SetSDL('UrwinSpawnTimes', 0, PtGetDniTime()+2)
-                if not silent: ki.DisplayStatusMessage('%s called the Urwin' % PtGetClientName())
+                if not silent: ki.DisplayStatusMessage('%s called the Urwin' % PtGetClientName(), 1)
             elif what == 'Monkey':
                 xUserKI.SetSDL('MonkeySpawnTimes', 0, PtGetDniTime()+2)
-                if not silent: ki.DisplayStatusMessage('%s called the Monkey' % PtGetClientName())
+                if not silent: ki.DisplayStatusMessage('%s called the Monkey' % PtGetClientName(), 1)
             else:
                 ki.DisplayErrorMessage('You have to call either \'Urwin\' or \'Monkey\' (this is case sensitive!)')
         elif (age == 'Payiferen'):
             xUserKI.SetSDL('UrwinSpawnTimes', 0, PtGetDniTime()+2)
-            if not silent: ki.DisplayStatusMessage('%s called the Urwin' % PtGetClientName())
+            if not silent: ki.DisplayStatusMessage('%s called the Urwin' % PtGetClientName(), 1)
         else:
             ki.DisplayErrorMessage('This command can only be used in Negilahn and Payiferen')
         return True
@@ -439,7 +439,7 @@ def OnCommand(ki, arg, cmnd, args, playerList, silent):
                     atResp = ptAttribResponder(999)
                     atResp.__setvalue__(resp)
                     atResp.run(ki.key)
-                    if not silent: ki.DisplayStatusMessage('%s created a fissure at stage %s' % (PtGetClientName(), stage))
+                    if not silent: ki.DisplayStatusMessage('%s created a fissure at stage %s' % (PtGetClientName(), stage), 1)
                     return True
             ki.DisplayErrorMessage('Error creating fissure: I could not find the correct responder')
         else:
@@ -503,7 +503,7 @@ def OnCommand(ki, arg, cmnd, args, playerList, silent):
         avatar.avatar.netForce(1)
         avatar.avatar.oneShot(playerKey, 1, 1, "WTFAnim", 0, 0)
         avatarName = PtGetClientName()
-        ki.DisplayStatusMessage("%s feels like WHAHOOOOKA! KAZHOOOOOOM! DOKRAAAAAH! WHAKCHAAAAAAAAAAA!" % avatarName)
+        ki.DisplayStatusMessage("%s feels like WHAHOOOOKA! KAZHOOOOOOM! DOKRAAAAAH! WHAKCHAAAAAAAAAAA!" % avatarName, 1)
         return True
     if (cmnd == 'crazy'):
         player = PtGetLocalPlayer()
@@ -512,7 +512,7 @@ def OnCommand(ki, arg, cmnd, args, playerList, silent):
         avatar.avatar.netForce(1)
         avatar.avatar.oneShot(playerKey, 1, 1, "Crazy", 0, 0)
         avatarName = PtGetClientName()
-        ki.DisplayStatusMessage("%s feels... uhm... crazy!" % avatarName)
+        ki.DisplayStatusMessage("%s feels... uhm... crazy!" % avatarName, 1)
         return True
     if (cmnd == 'wave2'):
         player = PtGetLocalPlayer()
@@ -535,7 +535,7 @@ def OnCommand(ki, arg, cmnd, args, playerList, silent):
                 PtAvatarEnterAnimMode("MaleDance")
             caDancing = True
         else:
-            ki.DisplayStatusMessage('You are already dancing!', netPropagate=0)
+            ki.DisplayStatusMessage('You are already dancing!', 0)
         return True
     if cmnd == 'stopdance':
         global caDancing
@@ -553,7 +553,7 @@ def OnCommand(ki, arg, cmnd, args, playerList, silent):
             PtAvatarEnterAnimMode("MaleKriech")
             caKriechen = True
             name = PtGetClientName()
-            ki.DisplayStatusMessage('%s starts to... crawl... somehow...' % name)
+            ki.DisplayStatusMessage('%s starts to... crawl... somehow...' % name, 1)
         else:
             PtAvatarExitAnimMode("MaleKriech")
             caKriechen = False
@@ -569,7 +569,7 @@ def OnCommand(ki, arg, cmnd, args, playerList, silent):
             PtAvatarEnterAnimMode(anim)
             caSwimSlow = True
             name = PtGetClientName()
-            ki.DisplayStatusMessage('%s starts to swim' % name)
+            ki.DisplayStatusMessage('%s starts to swim' % name, 1)
         else:
             PtAvatarExitAnimMode(anim)
             caSwimSlow = False
@@ -585,7 +585,7 @@ def OnCommand(ki, arg, cmnd, args, playerList, silent):
             PtAvatarEnterAnimMode(anim)
             caSwimFast = True
             name = PtGetClientName()
-            ki.DisplayStatusMessage('%s starts to swim' % name)
+            ki.DisplayStatusMessage('%s starts to swim' % name, 1)
         else:
             PtAvatarExitAnimMode(anim)
             caSwimFast = False
@@ -601,7 +601,7 @@ def OnCommand(ki, arg, cmnd, args, playerList, silent):
             PtAvatarEnterAnimMode(anim)
             caAeroplane = True
             name = PtGetClientName()
-            ki.DisplayStatusMessage('%s starts to fly like an aeroplane' % name)
+            ki.DisplayStatusMessage('%s starts to fly like an aeroplane' % name, 1)
         else:
             PtAvatarExitAnimMode(anim)
             caAeroplane = False
@@ -656,6 +656,6 @@ def OnCommand(ki, arg, cmnd, args, playerList, silent):
         myObj.avatar.runCoopAnim(targetKey,myAnim,targetAnim)
         if (not silent):
             ki.DisplayStatusMessage('%s is attacking %s' % (PtGetClientName(),
-                xUserKI.GetObjectName(targetObj)))
+                xUserKI.GetObjectName(targetObj)), 1)
         return True
     return False

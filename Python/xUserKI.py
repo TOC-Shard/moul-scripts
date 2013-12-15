@@ -82,7 +82,7 @@ def RunUserKIExtensions(name, call, everyone = True):
 
 def GetArg(ki, cmnd, args, usage, condition1, callback1 = 0, condition2 = 0, callback2 = 0):
     if len(args) == 1 and args[0] == 'help':
-        ki.DisplayStatusMessage('Usage: /%s <%s>' % (cmnd, usage), netPropagate=0)
+        ki.DisplayStatusMessage('Usage: /%s <%s>' % (cmnd, usage), 0)
         return (False, 0)
     try:
         if (condition1(args)):
@@ -380,9 +380,9 @@ def OnCommand(ki, command, silent):
         parts = command.split()
         if not len(parts): return False
         if (parts[0].lower() == 'info'):
-            ki.DisplayStatusMessage('This is based on the Offline KI %s by diafero' % gUserKIVersion, netPropagate=0)
-            ki.DisplayStatusMessage('Also containing contributions by Agenotfound, Almlys, a\'moaca\', Ashtar, cjkelly1, DarkFalkon, D\'Lanor, Dustin, LCC, GPNMilano, H\'astin, Hoikas, Kaelis Ebonrai, Sirius, Zrax and unknown AdminKI and UserKI programmers', netPropagate=0)
-            ki.DisplayStatusMessage('Updated and ported for TOC-MOUL usage by Mystler', netPropagate=0)
+            ki.DisplayStatusMessage('This is based on the Offline KI %s by diafero' % gUserKIVersion, 0)
+            ki.DisplayStatusMessage('Also containing contributions by Agenotfound, Almlys, a\'moaca\', Ashtar, cjkelly1, DarkFalkon, D\'Lanor, Dustin, LCC, GPNMilano, H\'astin, Hoikas, Kaelis Ebonrai, Sirius, Zrax and unknown AdminKI and UserKI programmers', 0)
+            ki.DisplayStatusMessage('Updated and ported for TOC-MOUL usage by Mystler', 0)
             return True
         # relay event
         return RunUserKIExtensions('OnCommand', lambda f: f(ki, command[len(parts[0])+1:], parts[0].lower(), parts[1:], ki.BKPlayerList, silent), everyone=False)

@@ -24,16 +24,16 @@ def OnCommand(ki, arg, cmnd, args, playerList, silent):
                 else:
                     entry.chronicleSetValue(activate)
                     entry.save()
-            ki.DisplayStatusMessage(('You have set the TOC Link animation to %s' % activate), netPropagate=0)
+            ki.DisplayStatusMessage('You have set the TOC Link animation to %s' % activate, 0)
         else:
-            ki.DisplayStatusMessage('You have to use /linkanim 0 or 1', netPropagate=0)
+            ki.DisplayStatusMessage('You have to use /linkanim 0 or 1', 0)
         return True
     if not xUserKIConfig.IsAdmin(): return False
     if cmnd == 'assassinate':
-        ki.DisplayStatusMessage(('OMG! %s is assassinating %s' % (PtGetClientName(), arg)))
+        ki.DisplayStatusMessage('OMG! %s is assassinating %s' % (PtGetClientName(), arg), 1)
         return True
     if cmnd == 'ccm':
-        ki.DisplayStatusMessage(arg)
+        ki.DisplayStatusMessage(arg, 1)
         return True
     if cmnd == 'wear':
         avatar = PtGetLocalAvatar()
@@ -54,25 +54,25 @@ def OnCommand(ki, arg, cmnd, args, playerList, silent):
             xUserKI.SetSDL('pheight03', 0, 1)
             xUserKI.SetSDL('pheight04', 0, 2)
             xUserKI.SetSDL('budget', 0, 0)
-            ki.DisplayStatusMessage('Solving the pillar puzzle!', netPropagate=0)
+            ki.DisplayStatusMessage('Solving the pillar puzzle!', 0)
         else:
-            ki.DisplayStatusMessage('You have to be in Kadish!', netPropagate=0)
+            ki.DisplayStatusMessage('You have to be in Kadish!', 0)
         return True
     if cmnd == 'resetpillars':
         AgeName = PtGetAgeName()
         if AgeName == 'Kadish':
             xUserKI.SetSDL('PillarRoomSolved', 0, 0)
             xUserKI.SetSDL('PillarsResetting', 0, 1)
-            ki.DisplayStatusMessage('Resetting the pillars!', netPropagate=0)
+            ki.DisplayStatusMessage('Resetting the pillars!', 0)
         else:
-            ki.DisplayStatusMessage('You have to be in Kadish!', netPropagate=0)
+            ki.DisplayStatusMessage('You have to be in Kadish!', 0)
         return True
     if cmnd == 'shroomie':
         AgeName = PtGetAgeName()
         if AgeName == 'Teledahn':
             tldnShroomieBrain.ShroomieKISpawn()
         else:
-            ki.DisplayStatusMessage('You have to be in Teledahn!', netPropagate=0)
+            ki.DisplayStatusMessage('You have to be in Teledahn!', 0)
         return True
     if cmnd == 'getpodsymbol':
         AgeName = PtGetAgeName()
@@ -82,9 +82,9 @@ def OnCommand(ki, arg, cmnd, args, playerList, silent):
         'Tetsonot']:
             PodSymbol.StartSymbol()
             avatarName = PtGetClientName()
-            ki.DisplayStatusMessage('%s called the pod symbol!' % avatarName)
+            ki.DisplayStatusMessage('%s called the pod symbol!' % avatarName, 1)
         else:
-            ki.DisplayStatusMessage('You have to be in a pod age!', netPropagate=0)
+            ki.DisplayStatusMessage('You have to be in a pod age!', 0)
         return True
     if cmnd == 'openthedoor':
         AgeName = PtGetAgeName()
@@ -92,9 +92,9 @@ def OnCommand(ki, arg, cmnd, args, playerList, silent):
         'EderTsogal']:
             BlueSpiral.WinGame()
             avatarName = PtGetClientName()
-            ki.DisplayStatusMessage('%s opened the door... HAAAAAX!' % avatarName)
+            ki.DisplayStatusMessage('%s opened the door... HAAAAAX!' % avatarName, 1)
         else:
-            ki.DisplayStatusMessage('You have to be in Eder Delin or Eder Tsogal!', netPropagate=0)
+            ki.DisplayStatusMessage('You have to be in Eder Delin or Eder Tsogal!', 0)
         return True
     if cmnd == 'ahnyspherebot':
         AgeName = PtGetAgeName()
@@ -102,11 +102,11 @@ def OnCommand(ki, arg, cmnd, args, playerList, silent):
             sphere = xUserKI.GetSDL("ahnyCurrentSphere", 0)
             if sphere == 1:
                 xUserKI.SetSDL("ahnyCurrentSphere", 0, 2)
-                ki.DisplayStatusMessage('A bot rotated the spheres forward!')
+                ki.DisplayStatusMessage('A bot rotated the spheres forward!', 1)
             else:
-                ki.DisplayStatusMessage('You have to be in Ahnonay Sphere 1!', netPropagate=0)
+                ki.DisplayStatusMessage('You have to be in Ahnonay Sphere 1!', 0)
         else:
-            ki.DisplayStatusMessage('You have to be in Ahnonay Sphere 1!', netPropagate=0)
+            ki.DisplayStatusMessage('You have to be in Ahnonay Sphere 1!', 0)
         return True
     if cmnd == 'getbugs':
         AgeName = PtGetAgeName()
@@ -135,9 +135,9 @@ def OnCommand(ki, arg, cmnd, args, playerList, silent):
                     entry.chronicleSetValue(str(currbugCount))
                     entry.save()
             avatarName = PtGetClientName()
-            ki.DisplayStatusMessage('%s got the Bugs... HAAAAAAAAX!' % avatarName)
+            ki.DisplayStatusMessage('%s got the Bugs... HAAAAAAAAX!' % avatarName, 1)
         else:
-            ki.DisplayStatusMessage('You have to be in Eder Gira!', netPropagate=0)
+            ki.DisplayStatusMessage('You have to be in Eder Gira!', 0)
         return True
     if cmnd == 'getwedges':
         AgeName = PtGetAgeName()
@@ -157,9 +157,9 @@ def OnCommand(ki, arg, cmnd, args, playerList, silent):
             psnlSDL['psnlBahroWedge11'] = (1,)
             psnlSDL['psnlBahroWedge12'] = (1,)
             psnlSDL['psnlBahroWedge13'] = (1,)
-            ki.DisplayStatusMessage('Got you all the wedges! Please re-link!', netPropagate=0)
+            ki.DisplayStatusMessage('Got you all the wedges! Please re-link!', 0)
         else:
-            ki.DisplayStatusMessage('You have to be in your Relto!', netPropagate=0)
+            ki.DisplayStatusMessage('You have to be in your Relto!', 0)
         return True
     if cmnd == 'finishpellets':
         AgeName = PtGetAgeName()
@@ -167,9 +167,9 @@ def OnCommand(ki, arg, cmnd, args, playerList, silent):
             time = PtGetDniTime()
             time = time + 10
             xUserKI.SetSDL("ercaBakeFinishTime", 0, time)
-            ki.DisplayStatusMessage('Your pellets are finished in 10 seconds!', netPropagate=0)
+            ki.DisplayStatusMessage('Your pellets are finished in 10 seconds!', 0)
         else:
-            ki.DisplayStatusMessage('You have to be in YOUR Ercana!', netPropagate=0)
+            ki.DisplayStatusMessage('You have to be in YOUR Ercana!', 0)
         return True
     if cmnd == 'flink':
         (valid, data,) = xUserKI.GetArg(ki, cmnd, args, 'object> <[list of avatars]>|<object', lambda args: len(args) >= 2,
@@ -188,9 +188,9 @@ def OnCommand(ki, arg, cmnd, args, playerList, silent):
         vault = ptVault()
         entry = vault.findChronicleEntry(arg)
         if type(entry) == type(None):
-            ki.DisplayStatusMessage('This value does not exist', netPropagate=0)
+            ki.DisplayStatusMessage('This value does not exist', 0)
         else:
             Value = entry.chronicleGetValue()
-            ki.DisplayStatusMessage('This chronicle has a value of %s' % (Value), netPropagate=0)
+            ki.DisplayStatusMessage('This chronicle has a value of %s' % (Value), 0)
         return True
     return False
