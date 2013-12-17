@@ -16,7 +16,18 @@ def removeData():
             "dat/GlobalClothing_District_test.prp",
             "dat/cityofdimensions_District_April.prp",
             "dat/cityofdimensions_District_StoryWall.prp",
-            "dat/Ercana_District_ercaImgrFix.prp"]
+            "dat/Ercana_District_ercaImgrFix.prp",
+            "dat/cityofdimensions_District_TOCmod01.prp",
+            "dat/cityofdimensions_District_TOCmod02.prp",
+            "dat/cityofdimensions_District_TOCmod03.prp",
+            "dat/cityofdimensions_District_TOCmod04.prp",
+            "dat/cityofdimensions_District_TOCmod05.prp",
+            "dat/cityofdimensions_District_TOCmod06.prp",
+            "dat/cityofdimensions_District_TOCmod07.prp",
+            "dat/cityofdimensions_District_TOCmod08.prp",
+            "dat/cityofdimensions_District_TOCmod09.prp",
+            "dat/cityofdimensions_District_TOCmod10.prp",
+            "dat/cityofdimensions_District_TOCmod11.prp"]
     folders = ["sfx/streamingCache"]
     for file in files:
         try:
