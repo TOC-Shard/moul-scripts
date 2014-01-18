@@ -190,12 +190,6 @@ class xKIChat(object):
         if PtGetLocalAvatar().avatar.getCurrentMode() == PtBrainModes.kAFK:
             PtAvatarExitAFK()
 
-        try:
-            message = unicode(message, kCharSet)
-        except UnicodeError:
-            message = None
-            self.AddChatLine(None, PtGetLocalizedString("KI.Errors.TextOnly"), kChat.SystemMessage)
-
         # Check for special commands.
         message = self.commandsProcessor(message, silent)
         if not message:
@@ -437,7 +431,10 @@ class xKIChat(object):
             # Is it an inter-Age message?
             elif cFlags.interAge:
                 if cFlags.private:
-                    headerColor = kColors.ChatHeaderPrivate
+                    if cFlags.admin:
+                        headerColor = kColors.ChatHeaderError
+                    else:
+                        headerColor = kColors.ChatHeaderPrivate
                     forceKI = True
                 else:
                     if cFlags.neighbors:
@@ -475,7 +472,10 @@ class xKIChat(object):
                     # PM Processing: Save playerID and flash client window
                     if cFlags.private:
                         self.lastPrivatePlayerID = (player.getPlayerName(), player.getPlayerID(), 1)
-                        self.AddPlayerToRecents(player.getPlayerID())
+                        PtFlashWindow()
+                    # Are we mentioned in the message?
+                    elif message.lower().find(PtGetLocalPlayer().getPlayerName().lower()) >= 0:
+                        bodyColor = kColors.ChatMessageMention
                         PtFlashWindow()
 
             # Is it a ccr broadcast?
@@ -497,6 +497,11 @@ class xKIChat(object):
                     else:
                         pretext = PtGetLocalizedString("KI.Chat.PrivateMsgRecvd")
                     forceKI = True
+
+                    # PM Processing: Save playerID and flash client window
+                    self.lastPrivatePlayerID = (player.getPlayerName(), player.getPlayerID(), 0)
+                    self.AddPlayerToRecents(player.getPlayerID())
+                    PtFlashWindow()
                 else:
                     headerColor = kColors.ChatHeaderAdmin
                     forceKI = True
@@ -510,6 +515,12 @@ class xKIChat(object):
                     headerColor = kColors.ChatHeaderBroadcast
                     pretext = PtGetLocalizedString("KI.Chat.BroadcastMsgRecvd")
                     self.AddPlayerToRecents(player.getPlayerID())
+
+                    # Are we mentioned in the message?
+                    if message.lower().find(PtGetLocalPlayer().getPlayerName().lower()) >= 0:
+                        bodyColor = kColors.ChatMessageMention
+                        forceKI = True
+                        PtFlashWindow()
 
             # Is it a private message?
             elif cFlags.private:
@@ -815,6 +826,7 @@ class CommandsProcessor:
         if PtIsInternalRelease():
             commands.update(kCommands.Internal)
         commands.update(kCommands.EasterEggs)
+        commands.update(kCommands.Other)
 
         # Does the message contain a standard command?
         for command, function in commands.iteritems():
@@ -1294,3 +1306,28 @@ class CommandsProcessor:
                 self.chatMgr.AddChatLine(None, pOut, 0)
         else:
             self.chatMgr.AddChatLine(None, "There is nothing there but lint.", 0)
+
+    ## Export the local avatar's clothing to a file
+    def SaveClothing(self, file):
+        if not file:
+            self.chatMgr.AddChatLine(None, "Usage: /loadclothing <name>", kChat.SystemMessage)
+            return
+        file = file + ".clo"
+        if PtGetLocalAvatar().avatar.saveClothingToFile(file):
+            self.chatMgr.AddChatLine(None, "Outfit exported to " + file, 0)
+        else:
+            self.chatMgr.AddChatLine(None, "Could not export to " + file, kChat.SystemMessage)
+
+    ## Import the local avatar's clothing from a file
+    def LoadClothing(self, file):
+        if not file:
+            self.chatMgr.AddChatLine(None, "Usage: /loadclothing <name>", kChat.SystemMessage)
+            return
+        if PtGetPlayerList() and not PtIsInternalRelease():
+            self.chatMgr.AddChatLine(None, "You have to be alone to change your clothes!", kChat.SystemMessage)
+            return
+        file = file + ".clo"
+        if PtGetLocalAvatar().avatar.loadClothingFromFile(file):
+            self.chatMgr.AddChatLine(None, "Outfit imported from " + file, 0)
+        else:
+            self.chatMgr.AddChatLine(None, file + " not found", kChat.SystemMessage)
