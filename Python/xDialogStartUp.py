@@ -349,7 +349,10 @@ class xDialogStartUp(ptResponder):
             PtDisableMovementKeys()
 
         elif (id == kInitTimer):
-            PtGetLocalAvatar().avatar.loadClothingFromFile(str(gPlayerList[0][1]) + ".clo")
+            if PtGetLocalAvatar().avatar.loadClothingFromFile(str(gPlayerList[0][1]) + ".clo"):
+                PtGetLocalAvatar().draw.enable()
+            else:
+                PtGetLocalAvatar().draw.disable()
             PtAtTimeCallback(self.key, 0.1, kMovementTimer) #Disable movement keys after possible avatar change
 
     #####################################################
@@ -462,8 +465,6 @@ class xDialogStartUp(ptResponder):
 
     ########################################
     def ActivatePlayerButtons(self, toggle):
-        global gExplorerScreen
-
         gExplorerScreen = toggle
 
         for tagID in kExp_Buttons:
@@ -512,7 +513,10 @@ class xDialogStartUp(ptResponder):
             gSelectedSlot = tagID
             self.ToggleSelect(tagID, True)
             id = gPlayerList[gSelectedSlot-kMinusExplorer][1]
-            PtGetLocalAvatar().avatar.loadClothingFromFile(str(id) + ".clo")
+            if PtGetLocalAvatar().avatar.loadClothingFromFile(str(id) + ".clo"):
+                PtGetLocalAvatar().draw.enable()
+            else:
+                PtGetLocalAvatar().draw.disable()
             PtAtTimeCallback(self.key, 0.1, kMovementTimer) #Disable movement keys after possible avatar change
 
     ##################################
