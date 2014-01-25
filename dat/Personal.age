@@ -11,6 +11,6 @@ Page=psnlMYSTII,1
 Page=trailerCamPage,3
 Page=OpasReltoPages,100
 Page=price,101
-Page=xMas,102,1
+Page=xMas,102
 Page=psnlMusicnew,151
 Page=WallPrice,152
