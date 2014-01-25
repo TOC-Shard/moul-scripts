@@ -559,7 +559,7 @@ class nb01RPSGame(ptResponder):
                     statusMsg = PtGetLocalizedString("Heek.Messages.Welcome", [finalMsg.name(), unicode(finalMsg.rank()), unicode(finalMsg.points())])
                 else:
                     statusMsg = PtGetLocalizedString("Heek.Messages.WelcomePlural", [finalMsg.name(), unicode(finalMsg.rank()), unicode(finalMsg.points())])
-                PtDebugPrint("nb01RPSGame::OnGameCliMsg(): Sending welcome message to the KI: "+str(statusMsg))
+                PtDebugPrint("nb01RPSGame::OnGameCliMsg(): Sending welcome message to the KI: "+statusMsg)
                 PtSendKIMessage(kKILocalChatStatusMsg,statusMsg)
             elif (msgType == PtHeekMsgTypes.kHeekDrop):
                 # this message should only be sent to the game owner, so we don't need to check to see if we are the owner
@@ -652,7 +652,7 @@ class nb01RPSGame(ptResponder):
                         statusMsg = PtGetLocalizedString("Heek.Messages.Rank", [unicode(finalMsg.rank()), unicode(finalMsg.points())])
                     else:
                         statusMsg = PtGetLocalizedString("Heek.Messages.RankPlural", [unicode(finalMsg.rank()), unicode(finalMsg.points())])
-                    PtDebugPrint("nb01RPSGame::OnGameCliMsg(): Sending point message to the KI: "+str(statusMsg))
+                    PtDebugPrint("nb01RPSGame::OnGameCliMsg(): Sending point message to the KI: "+statusMsg)
                     PtSendKIMessage(kKILocalChatStatusMsg,statusMsg)
 
     def OnFirstUpdate(self):
