@@ -16,6 +16,8 @@ pagesS1FinaleBahro = [    "TOC_bahroFlyers_city1","TOC_bahroFlyers_city2",\
                             "TOC_bahroFlyers_city3","TOC_bahroFlyers_city4","TOC_bahroFlyers_city5",\
                             "TOC_bahroFlyers_city6"]
 
+DRCStageStateSDL = "islmDRCStageState"
+
 EventTime = 3600
 
 class cityofdimensions(ptResponder):
@@ -29,7 +31,11 @@ class cityofdimensions(ptResponder):
         pass
 
     def OnServerInitComplete(self):
+        ageSDL = PtGetAgeSDL()
+        
         self.ISetTimers()
+        self.DRCStageState()
+        
         for sdl in sdlBahroShout:
             self.SetSDL(sdl, 0, 0)
         try:
@@ -40,7 +46,6 @@ class cityofdimensions(ptResponder):
             pass
         
         try:
-            ageSDL = PtGetAgeSDL()
             n = 0
             for sdl in sdlS1FinaleBahro:
                 ageSDL.setFlags(sdl,1,1)
@@ -52,13 +57,22 @@ class cityofdimensions(ptResponder):
                 n += 1
         except:
             print "ERROR!  Couldn't find all Bahro sdl, leaving default = 0"
-    def Load(self):
-        pass
 
 
     def OnNotify(self, state, id, events):
         pass
 
+        
+    def OnSDLNotify(self,VARname,SDLname,playerID,tag):
+        ageSDL = PtGetAgeSDL()
+        PtDebugPrint("cityofdimensions.OnSDLNotify():\t VARname: %s, SDLname: %s, tag: %s, value: %d" % (VARname,SDLname,tag,ageSDL[VARname][0]))
+
+        if VARname in sdlS1FinaleBahro:
+            id = sdlS1FinaleBahro.index(VARname)
+            val = ageSDL[sdlS1FinaleBahro[id]][0]
+            self.ILoadS1FinaleBahro(id,val)
+            
+            
     def OnTimer(self, TimerID):
         print ('OnTimer: callback id=%d' % TimerID)
         if (TimerID == 1):
@@ -102,19 +116,25 @@ class cityofdimensions(ptResponder):
         PtDebugPrint('Next Bahro Show starts in %d seconds' % timeLeft)
 
         
-        
-    def OnSDLNotify(self,VARname,SDLname,playerID,tag):
+    def DRCStageState(NewSDLValue):
         ageSDL = PtGetAgeSDL()
-        PtDebugPrint("cityofdimensions.OnSDLNotify():\t VARname: %s, SDLname: %s, tag: %s, value: %d" % (VARname,SDLname,tag,ageSDL[VARname][0]))
+        
+        if ageSDL[DRCStageStateSDL][0] == 0:
+            PtDebugPrint("cityofdimensions.DRCStageState: paging out DRC stage")
+            PtPageOutNode("TOC_islmDRCStageState01")
+            PtPageOutNode("TOC_islmDRCStageState02")
+            
+        elif ageSDL[DRCStageStateSDL][0] == 1:
+            PtDebugPrint("cityofdimensions.DRCStageState: paging in DRC stage")
+            PtPageOutNode("TOC_islmDRCStageState02")
+            PtPageInNode("TOC_islmDRCStageState01")
+            
+        elif ageSDL[DRCStageStateSDL][0] == 2:
+            PtDebugPrint("cityofdimensions.DRCStageState: paging in deco DRC stage")
+            PtPageInNode("TOC_islmDRCStageState01")
+            PtPageInNode("TOC_islmDRCStageState02")
 
-        if VARname in sdlS1FinaleBahro:
-#            if not self.sceneobject.isLocallyOwned():
-#                return
-            id = sdlS1FinaleBahro.index(VARname)
-            val = ageSDL[sdlS1FinaleBahro[id]][0]
-            self.ILoadS1FinaleBahro(id,val)
-
-
+        
     def ILoadS1FinaleBahro(self,bahro,state):
         print "cityofdimensions.ILoadS1FinaleBahro(): bahro = %d, load = %d" % (bahro,state)
 #        if not self.sceneobject.isLocallyOwned():
