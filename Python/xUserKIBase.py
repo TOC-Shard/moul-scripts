@@ -72,12 +72,6 @@ gColorNames = ['black', 'blue', 'brown', 'cyan', 'darkbrown', 'darkgreen', 'dark
 gLastSpawnPos = []
 gCommandList = []
 
-caDancing = False
-caKriechen = False
-caSwimSlow = False
-caSwimFast = False
-caAeroplane = False
-
 # Helper functions
 def StrToColor(str):
     color = None
@@ -531,86 +525,40 @@ def OnCommand(ki, arg, cmnd, args, playerList, silent):
         else:
             avatar.avatar.oneShot(playerKey, 1, 1, "MaleWaveChr", 0, 0)
         return True
-    if cmnd == 'startdance':
-        global caDancing
-        if caDancing == False:
-            gender = PtGetLocalAvatar().avatar.getAvatarClothingGroup()
-            if gender == 1:
-                PtAvatarEnterAnimMode("FemaleDance")
-            else:
-                PtAvatarEnterAnimMode("MaleDance")
-            caDancing = True
-        else:
-            ki.DisplayStatusMessage('You are already dancing!', 0)
-        return True
-    if cmnd == 'stopdance':
-        global caDancing
-        if caDancing == True:
-            gender = PtGetLocalAvatar().avatar.getAvatarClothingGroup()
-            if gender == 1:
-                PtAvatarExitAnimMode("FemaleDance")
-            else:
-                PtAvatarExitAnimMode("MaleDance")
-            caDancing = False
-        return True
     if cmnd == 'crawl':
-        global caKriechen
-        if caKriechen == False:
-            PtAvatarEnterAnimMode("MaleKriech")
-            caKriechen = True
-            name = PtGetClientName()
-            ki.DisplayStatusMessage('%s starts to... crawl... somehow...' % name, 1)
-        else:
-            PtAvatarExitAnimMode("MaleKriech")
-            caKriechen = False
+        PtAvatarEnterAnimMode("MaleKriech")
+        name = PtGetClientName()
+        ki.DisplayStatusMessage('%s starts to... crawl... somehow...' % name, 1)
         return True
     if cmnd == 'swim':
-        global caSwimSlow
         gender = PtGetLocalAvatar().avatar.getAvatarClothingGroup()
         if gender == 1:
             anim = "FemaleSwimSlow"
         else:
             anim = "MaleSwimSlow"
-        if caSwimSlow == False:
-            PtAvatarEnterAnimMode(anim)
-            caSwimSlow = True
-            name = PtGetClientName()
-            ki.DisplayStatusMessage('%s starts to swim' % name, 1)
-        else:
-            PtAvatarExitAnimMode(anim)
-            caSwimSlow = False
+        PtAvatarEnterAnimMode(anim)
+        name = PtGetClientName()
+        ki.DisplayStatusMessage('%s starts to swim' % name, 1)
         return True
     if cmnd == 'swimfast':
-        global caSwimFast
         gender = PtGetLocalAvatar().avatar.getAvatarClothingGroup()
         if gender == 1:
             anim = "FemaleSwimFast"
         else:
             anim = "MaleSwimFast"
-        if caSwimFast == False:
-            PtAvatarEnterAnimMode(anim)
-            caSwimFast = True
-            name = PtGetClientName()
-            ki.DisplayStatusMessage('%s starts to swim' % name, 1)
-        else:
-            PtAvatarExitAnimMode(anim)
-            caSwimFast = False
+        PtAvatarEnterAnimMode(anim)
+        name = PtGetClientName()
+        ki.DisplayStatusMessage('%s starts to swim' % name, 1)
         return True
     if cmnd == 'aeroplane':
-        global caAeroplane
         gender = PtGetLocalAvatar().avatar.getAvatarClothingGroup()
         if gender == 1:
             anim = "FemaleAeroplane"
         else:
             anim = "MaleAeroplane"
-        if caAeroplane == False:
-            PtAvatarEnterAnimMode(anim)
-            caAeroplane = True
-            name = PtGetClientName()
-            ki.DisplayStatusMessage('%s starts to fly like an aeroplane' % name, 1)
-        else:
-            PtAvatarExitAnimMode(anim)
-            caAeroplane = False
+        PtAvatarEnterAnimMode(anim)
+        name = PtGetClientName()
+        ki.DisplayStatusMessage('%s starts to fly like an aeroplane' % name, 1)
         return True
     if cmnd == 'cod':
         ageLink = ptAgeLinkStruct()
@@ -629,39 +577,5 @@ def OnCommand(ki, arg, cmnd, args, playerList, silent):
             PtLinkToAge("ScreenAge")
         else:
             ki.DisplayErrorMessage("You do not have the greenscreen age!")
-        return True
-    if cmnd == 'attack':
-        (valid, target,) = xUserKI.GetArg(ki, cmnd, args, 'target', lambda args:(len(args) == 1),
-            lambda args:xUserKI.GetPlayer(ki, args[0], playerList))
-        if ((not valid) or (not target)):
-            return True
-        #set Anim
-        myKey = PtGetAvatarKeyFromClientID(PtGetLocalPlayer().getPlayerID())
-        myObj = PtGetLocalAvatar()
-        myGender = myObj.avatar.getAvatarClothingGroup()
-        if myGender == 1:
-            myAnim = "FemaleShakeFist"
-        else:
-            myAnim = "MaleShakeFist"
-        targetKey = PtGetAvatarKeyFromClientID(target.getPlayerID())
-        targetObj = targetKey.getSceneObject()
-        targetGender = targetObj.avatar.getAvatarClothingGroup()
-        if targetGender == 1:
-            targetAnim = "FemaleCower"
-        else:
-            targetAnim = "MaleCower"
-        #check distance
-        myPos = ptVector3(myObj.position().getX(), myObj.position().getY(), myObj.position().getZ())
-        targetPos = ptVector3(targetObj.position().getX(), targetObj.position().getY(), targetObj.position().getZ())
-        me2tar = targetPos - myPos
-        tar2me = ptVector3(-me2tar.getX(), -me2tar.getY(), -me2tar.getZ())
-        distance = me2tar.length()
-        if distance > 5:
-            ki.DisplayErrorMessage("You are too far away from your target!")
-            return True
-        myObj.avatar.runCoopAnim(targetKey,myAnim,targetAnim)
-        if (not silent):
-            ki.DisplayStatusMessage('%s is attacking %s' % (PtGetClientName(),
-                xUserKI.GetObjectName(targetObj)), 1)
         return True
     return False

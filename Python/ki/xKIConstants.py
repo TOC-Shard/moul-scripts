@@ -250,7 +250,7 @@ class kCommands:
     EasterEggs = {"/look" : "LookAround",
                   "/get feather" : "GetFeather",
                   "/look in pocket" : "LookForFeathers"}
-    Text = {"/go" : "Put one foot in front of the other and eventually you will get there.",
+    Text = {"/go" : "Put one foot in front of the other and eventually you will get there."}
     Other = {"/party" : "PartyTime",
              "/saveclothing" : "SaveClothing",
              "/loadclothing" : "LoadClothing",
