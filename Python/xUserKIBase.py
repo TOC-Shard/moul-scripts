@@ -329,6 +329,9 @@ def OnCommand(ki, arg, cmnd, args, playerList, silent):
     if (cmnd in ['fcol', 'fogcolor', 'skincolor', 'haircolor', 'eyecolor']):
         # data[0] is the name of the color, data[1] either nonexistant (if the color has to be determined by name)
         # or an array with the r, g and b values
+        if xUserKIConfig.IsLockedAge() or (PtGetAgeName() == "cityofdimensions" and not xUserKIConfig.IsAdmin()):
+            ki.DisplayErrorMessage("You are in a locked age, some KI commands are disabled here")
+            return True
         (valid, data) = xUserKI.GetArg(ki, cmnd, args, 'color name>|<red> <green> <blue',
           lambda args: len(args) == 3, lambda args: (float(args[0]), float(args[1]), float(args[2])),
           lambda args: len(args) == 1, lambda args: (args[0], ))
@@ -382,6 +385,9 @@ def OnCommand(ki, arg, cmnd, args, playerList, silent):
         return True
     # fog density
     if (cmnd in ['fogdensity', 'fdens']):
+        if xUserKIConfig.IsLockedAge() or (PtGetAgeName() == "cityofdimensions" and not xUserKIConfig.IsAdmin()):
+            ki.DisplayErrorMessage("You are in a locked age, some KI commands are disabled here")
+            return True
         (valid, data) = xUserKI.GetArg(ki, cmnd, args, 'start distance> <end distance> <density',
           lambda args: len(args) == 3, lambda args: (float(args[0]), float(args[1]), float(args[2])))
         if not valid: return True

@@ -6,10 +6,19 @@ from PlasmaVaultConstants import *
 Object = ptAttribSceneobject(1, "Price") #Pellet, Heek, Wall
 Game = ptAttribString(2, "Game") #Pellet, Heek, Wall
 
-
-PelletWinners = [21329] #insert KI# of winner(s)
-HeekWinners = [15942, 87716] #insert KI# of winners(s)
-WallWinners = [3349, 103367]
+# Winner's KI Number
+PelletWinners = [
+    21329 # Chronos
+]
+HeekWinners = [
+    15942, # Ehren (old avatar)
+    301538, # Ehren
+    87716 # Li Burumi
+]
+WallWinners = [
+    3349, # Scarchu
+    103367 # Jogi
+]
 
 
 class psnlPriceMgr(ptModifier):
