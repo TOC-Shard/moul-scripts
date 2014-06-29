@@ -48,6 +48,7 @@ import time
 from Plasma import *
 from PlasmaConstants import *
 from PlasmaKITypes import *
+from PlasmaNetConstants import *
 from PlasmaTypes import *
 from PlasmaVaultConstants import *
 
@@ -66,7 +67,7 @@ import xUserKI
 class xKIChat(object):
 
     ## Set up the chat manager's default state.
-    def __init__(self, StartFadeTimer, KillFadeTimer, FadeCompletely):
+    def __init__(self, StartFadeTimer, ResetFadeState, FadeCompletely):
 
         # Set the default properties.
         self.autoShout = False
@@ -93,11 +94,15 @@ class xKIChat(object):
         self.KIDisabled = False
         self.KILevel = kMicroKI
         self.StartFadeTimer = StartFadeTimer
-        self.KillFadeTimer = KillFadeTimer
+        self.ResetFadeState = ResetFadeState
         self.FadeCompletely = FadeCompletely
 
         # Add the commands processor.
         self.commandsProcessor = CommandsProcessor(self)
+
+        # Message History
+        self.MessageHistoryIs = -1 # Current position in message history (up/down key)
+        self.MessageHistoryList = [] # Contains our message history
 
     #######
     # GUI #
@@ -130,8 +135,7 @@ class xKIChat(object):
             mKIdialog = KIMicro.dialog
         else:
             mKIdialog = KIMini.dialog
-        self.KillFadeTimer()
-        self.StartFadeTimer()
+        self.ResetFadeState()
         chatarea = ptGUIControlMultiLineEdit(mKIdialog.getControlFromTag(kGUI.ChatDisplayArea))
         chatarea.moveCursor(direction)
 
@@ -142,6 +146,8 @@ class xKIChat(object):
     ## Make the player enter or exit chat mode.
     # Chat mode means the player's keyboard input is being sent to the chat.
     def ToggleChatMode(self, entering, firstChar=None):
+        # Reset selection in message history
+        self.MessageHistoryIs = -1
 
         if self.KILevel == kMicroKI:
             mKIdialog = KIMicro.dialog
@@ -163,7 +169,7 @@ class xKIChat(object):
             caret.show()
             mKIdialog.setFocus(chatEdit.getKey())
             self.toReplyToLastPrivatePlayerID = self.lastPrivatePlayerID
-            self.KillFadeTimer()
+            self.ResetFadeState()
         else:
             caret.hide()
             chatEdit.hide()
@@ -195,6 +201,11 @@ class xKIChat(object):
         if not message:
             return
         msg = message.lower()
+
+        # Message History input
+        self.MessageHistoryList.insert(0,message)
+        if (len(self.MessageHistoryList) > kMessageHistoryListMax):
+            self.MessageHistoryList.pop()
 
         # Get any selected players.
         userListBox = ptGUIControlListBox(KIMini.dialog.getControlFromTag(kGUI.PlayerList))
@@ -608,9 +619,7 @@ class xKIChat(object):
 
         # Update the fading controls.
         mKIdialog.refreshAllControls()
-        if not self.isChatting:
-            self.KillFadeTimer()
-            self.StartFadeTimer()
+        self.ResetFadeState()
 
     ## Display a status message to the player (or players if net-propagated).
     def DisplayStatusMessage(self, statusMessage, netPropagate=0):
@@ -870,7 +879,10 @@ class CommandsProcessor:
             words = message.split()
             try:
                 emote = xKIExtChatCommands.xChatEmoteXlate[unicode(words[0][1:].lower())]
-                PtEmoteAvatar(emote[0])
+                if emote[0] in xKIExtChatCommands.xChatEmoteLoop:
+                    PtAvatarEnterAnimMode(emote[0])
+                else:
+                    PtEmoteAvatar(emote[0])
                 if PtGetLanguage() == PtLanguage.kEnglish:
                     avatar = PtGetLocalAvatar()
                     gender = avatar.avatar.getAvatarClothingGroup()
@@ -1307,6 +1319,73 @@ class CommandsProcessor:
         else:
             self.chatMgr.AddChatLine(None, "There is nothing there but lint.", 0)
 
+    ##################
+    # Other Commands #
+    ##################
+
+    def PartyTime(self, params):
+        """Implements the `/party` command"""
+
+        # First, find the PartyAge chronicle in the global inbox
+        party = None
+        vault = ptVault()
+        inbox = vault.getGlobalInbox()
+        for childRef in inbox.getChildNodeRefList():
+            child = childRef.getChild()
+            if not child:
+                continue
+            child = child.upcastToChronicleNode()
+            if not child:
+                continue
+            if child.chronicleGetName() == kChron.Party:
+                party = child
+                break
+
+        # Let's see what we need to do
+        if not params:
+            # No params = LINK ME!
+            if party and party.chronicleGetValue():
+                data = party.chronicleGetValue().split(";", 3)
+                ageInfo = ptAgeInfoStruct()
+                ageInfo.setAgeFilename(data[0])
+                ageInfo.setAgeInstanceGuid(data[1])
+
+                ageLink = ptAgeLinkStruct()
+                ageLink.setAgeInfo(ageInfo)
+                ageLink.setLinkingRules(PtLinkingRules.kBasicLink)
+                ageLink.setSpawnPoint(ptSpawnPointInfo(data[2], data[2]))
+
+                # Player is not really linking--this is an OOC cheat.
+                nlm = ptNetLinkingMgr()
+                nlm.linkToAge(ageLink, linkInSfx=False, linkOutSfx=False)
+            else:
+                self.chatMgr.AddChatLine(None, "There is no party to crash!", kChat.SystemMessage)
+                return
+        elif PtIsInternalRelease():
+            try:
+                PtFindSceneobject(params, PtGetAgeName())
+            except NameError:
+                # Garbage SO = kill party
+                if party:
+                    party.chronicleSetValue("")
+                    party.save()
+                    self.chatMgr.AddChatLine(None, "Party Crashed.", 0)
+                else:
+                    self.chatMgr.AddChatLine(None, "No party. Your link-in-point is invalid.", kChat.SystemMessage)
+            else:
+                # Got a LIP... Need to set the chronicle
+                ageInfo = PtGetAgeInfo()
+                data = "%s;%s;%s" % (ageInfo.getAgeFilename(), ageInfo.getAgeInstanceGuid(), params)
+                if not party:
+                    party = ptVaultChronicleNode()
+                    party.chronicleSetName(kChron.Party)
+                    party.chronicleSetValue(data)
+                    party.save() # creates node on server (and blocks) so we can add it to the global inbox
+                    inbox.addNode(party)
+                else:
+                    party.chronicleSetValue(data)
+                    party.save()
+
     ## Export the local avatar's clothing to a file
     def SaveClothing(self, file):
         if not file:
@@ -1331,3 +1410,22 @@ class CommandsProcessor:
             self.chatMgr.AddChatLine(None, "Outfit imported from " + file, 0)
         else:
             self.chatMgr.AddChatLine(None, file + " not found", kChat.SystemMessage)
+
+    ## Example function for a coop animation
+    def CoopExample(self, name):
+        if not name:
+            self.chatMgr.AddChatLine(None, "Usage: /threaten <playername>", kChat.SystemMessage)
+            return
+        targetKey = None;
+        for player in PtGetPlayerList():
+            if player.getPlayerName().lower() == name.lower():
+                name = player.getPlayerName()
+                targetKey = PtGetAvatarKeyFromClientID(player.getPlayerID())
+                break
+        if targetKey is None:
+            self.chatMgr.AddChatLine(None, name + " not found", kChat.SystemMessage)
+            return
+        if PtGetLocalAvatar().avatar.runCoopAnim(targetKey, "ShakeFist", "Cower"):
+            self.chatMgr.DisplayStatusMessage(PtGetClientName() + " threatens " + name, 1)
+        else:
+            self.chatMgr.AddChatLine(None, "You are too far away", kChat.SystemMessage)

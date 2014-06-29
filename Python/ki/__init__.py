@@ -49,6 +49,7 @@ from Plasma import *
 from PlasmaGame import *
 from PlasmaTypes import *
 from PlasmaKITypes import *
+from PlasmaConstants import *
 from PlasmaVaultConstants import *
 from PlasmaNetConstants import *
 
@@ -280,7 +281,7 @@ class xKI(ptModifier):
         self.autocompleteState = AutocompleteState()
 
         ## The chatting manager.
-        self.chatMgr = xKIChat.xKIChat(self.StartFadeTimer, self.KillFadeTimer, self.FadeCompletely)
+        self.chatMgr = xKIChat.xKIChat(self.StartFadeTimer, self.ResetFadeState, self.FadeCompletely)
 
         xUserKI.KIManager = self
         xUserKI.OnEarlyInit(self.chatMgr)
@@ -874,8 +875,7 @@ class xKI(ptModifier):
             self.MiniKICreateJournalNote()
         elif command == kKIToggleFade:
             if self.chatMgr.IsFaded():
-                self.KillFadeTimer()
-                self.StartFadeTimer()
+                self.ResetFadeState()
             else:
                 self.FadeCompletely()
         elif command == kKIToggleFadeEnable:
@@ -912,8 +912,7 @@ class xKI(ptModifier):
                     self.ToggleMiniKI(1)
                 elif not BigKI.dialog.isEnabled():
                     if self.chatMgr.fadeEnableFlag and self.chatMgr.IsFaded():
-                        self.KillFadeTimer()
-                        self.StartFadeTimer()
+                        self.ResetFadeState()
                     else:
                         self.ToggleKISize()
                 else:
@@ -1374,8 +1373,7 @@ class xKI(ptModifier):
         if avatarSet:
             if not KIMini.dialog.isEnabled():
                 KIMini.dialog.show()
-            self.KillFadeTimer()
-            self.StartFadeTimer()
+            self.ResetFadeState()
 
     ## Called by Plasma on receipt of a high-level player vault event.
     def OnVaultNotify(self, event, tupData):
@@ -1528,6 +1526,15 @@ class xKI(ptModifier):
         KIBlackbar.dialog.hide()
         BigKI.dialog.hide()
         self.chatMgr.ToggleChatMode(0)
+
+        # Remove unneeded kFontShadowed flags (as long as we can't do that directly in the PRPs)
+        for dialogAttr in (BigKI, KIListModeDialog, KIJournalExpanded, KIPictureExpanded, KIPlayerExpanded, KIAgeOwnerExpanded, KISettings, KIMarkerFolderExpanded, KICreateMarkerGameGUI):
+            for i in xrange(dialogAttr.dialog.getNumControls()):
+                f = ptGUIControl(dialogAttr.dialog.getControlFromIndex(i))
+                # call this on all controls, even those that use the color scheme of the
+                # dialog and would already report the flag cleared after the first one,
+                # as they still need the setFontFlags call to refresh themselves
+                f.setFontFlags(f.getFontFlags() & ~int(PtFontFlags.kFontShadowed))
 
         if self.KILevel == kMicroKI:
             # Show the microBlackbar.
@@ -1788,6 +1795,26 @@ class xKI(ptModifier):
             control.setStringW(proposition)
             control.end()
             control.refresh()
+
+    #~~~~~~~~~~~~~~~~~#
+    # Message History #
+    #~~~~~~~~~~~~~~~~~#
+
+    ## Set a control's text to a log entry in the message history
+    def MessageHistory(self, control, set):
+
+        if (set == "up"):
+            if (self.chatMgr.MessageHistoryIs < len(self.chatMgr.MessageHistoryList)-1):
+                self.chatMgr.MessageHistoryIs = self.chatMgr.MessageHistoryIs +1
+                control.setStringW(self.chatMgr.MessageHistoryList[self.chatMgr.MessageHistoryIs])
+                control.end()
+                control.refresh()
+        elif (set == "down"):
+            if (self.chatMgr.MessageHistoryIs > 0):
+                self.chatMgr.MessageHistoryIs = self.chatMgr.MessageHistoryIs -1
+                control.setStringW(self.chatMgr.MessageHistoryList[self.chatMgr.MessageHistoryIs])
+                control.end()
+                control.refresh()
 
     #~~~~~~~~~~#
     # GZ Games #
@@ -2408,6 +2435,7 @@ class xKI(ptModifier):
                     avatar.avatar.wearClothingItem("FAccPlayerBook")
                 else:
                     avatar.avatar.wearClothingItem("MAccPlayerBook")
+                avatar.avatar.saveClothing()
             except NameError:
                 pass
         elif self.KILevel == kNormalKI:
@@ -2423,6 +2451,7 @@ class xKI(ptModifier):
                 else:
                     avatar.avatar.wearClothingItem("MAccPlayerBook")
                     avatar.avatar.wearClothingItem("MAccKI")
+                avatar.avatar.saveClothing()
             except NameError:
                 pass
 
@@ -2738,6 +2767,17 @@ class xKI(ptModifier):
         chatArea.enableScrollControl()
         mKIdialog.refreshAllControls()
 
+    def ResetFadeState(self, force=False):
+        """This turns the chat fade OFF and resets it if the user is not chatting.
+           Use this instead of calling `KillFadeTimer()` and `StartFadeTimer()` to toggle the state.
+           Use `force` to disable checking of the chatting status (why would you do that?)
+        """
+
+        # I'm cheating.
+        self.KillFadeTimer()
+        if not self.chatMgr.isChatting or force:
+            self.StartFadeTimer()
+
     ## Make the miniKI lists completely faded out.
     def FadeCompletely(self):
 
@@ -3015,8 +3055,7 @@ class xKI(ptModifier):
                 PtDebugPrint(u"xKI.ScrollPlayerList(): Not scrolling player list down from {}.".format(currPos), level=kDebugDumpLevel)
         self.CheckScrollButtons()
         mKIdialog.refreshAllControls()
-        self.KillFadeTimer()
-        self.StartFadeTimer()
+        self.ResetFadeState()
 
     ## Checks to see if the player list scroll buttons should be visible.
     def CheckScrollButtons(self):
@@ -4462,7 +4501,7 @@ class xKI(ptModifier):
             if isinstance(content, ptVaultNodeRef):
                 element = content.getChild()
                 if element is not None:
-                    if element.getType() == PtVaultNodeTypes.kFolderNode:
+                    if element.getType() == PtVaultNodeTypes.kFolderNode or element.getType() == PtVaultNodeTypes.kChronicleNode:
                         removeList.insert(0, contentidx)
         for removeidx in removeList:
             del self.BKContentList[removeidx]
@@ -5716,8 +5755,7 @@ class xKI(ptModifier):
                     self.chatMgr.SendMessage(control.getStringW())
                 self.chatMgr.ToggleChatMode(0)
             elif ctrlID == kGUI.ChatDisplayArea:
-                self.KillFadeTimer()
-                self.StartFadeTimer()
+                self.ResetFadeState()
         elif event == kFocusChange:
             # If they are chatting, get the focus back.
             if self.chatMgr.isChatting:
@@ -5857,9 +5895,8 @@ class xKI(ptModifier):
                 if self.chatMgr.isChatting:
                     chatedit = ptGUIControlEditBox(KIMini.dialog.getControlFromTag(kGUI.ChatEditboxID))
                     KIMini.dialog.setFocus(chatedit.getKey())
-                # They're playing with the player list, so kill the fade timer.
-                self.KillFadeTimer()
-                self.StartFadeTimer()
+                # They're playing with the player list, so reset the fade.
+                self.ResetFadeState()
             elif ctrlID == kGUI.miniPutAwayID:
                 self.ToggleMiniKI()
             elif ctrlID == kGUI.miniToggleBtnID:
@@ -5885,8 +5922,7 @@ class xKI(ptModifier):
                 self.CaptureGZMarker()
                 self.RefreshMiniKIMarkerDisplay()
             elif ctrlID == kGUI.ChatDisplayArea:
-                self.KillFadeTimer()
-                self.StartFadeTimer()
+                self.ResetFadeState()
             elif ctrlID == kGUI.miniMGNewMarker:
                 self.CreateAMarker()
             elif ctrlID == kGUI.miniMGNewGame:
@@ -5912,6 +5948,15 @@ class xKI(ptModifier):
             ctrlID = control.getTagID()
             if ctrlID == kGUI.ChatEditboxID:
                 self.Autocomplete(control)
+        # Up or Down key to scroll in the chat history
+        elif event == kMessageHistoryUp:
+            ctrlID = control.getTagID()
+            if ctrlID == kGUI.ChatEditboxID:
+                self.MessageHistory(control, "up")
+        elif event == kMessageHistoryDown:
+            ctrlID = control.getTagID()
+            if ctrlID == kGUI.ChatEditboxID:
+                self.MessageHistory(control, "down")
 
     ## Process notifications originating from the BigKI itself.
     # This does not process notifications specific to an expanded view - each
@@ -6087,7 +6132,7 @@ class xKI(ptModifier):
                         elif isinstance(self.BKPlayerSelected, Device):
                             if self.BKPlayerSelected.name in self.imagerMap:
                                 sName = "Upload={}".format(self.BKPlayerSelected.name)
-                                SendNote(self.key, self.imagerMap[self.BKPlayerSelected.name], sName, sendElement.getID(), True)
+                                SendNote(self.key, self.imagerMap[self.BKPlayerSelected.name], sName, sendElement.getID())
                             toPlayerBtn.hide()
                         elif isinstance(self.BKPlayerSelected, ptVaultNode):
                             if self.BKPlayerSelected.getType() == PtVaultNodeTypes.kPlayerInfoListNode:

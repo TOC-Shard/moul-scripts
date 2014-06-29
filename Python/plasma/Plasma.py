@@ -1603,7 +1603,7 @@ Such as a game master, only running on the client that owns a particular object"
         """Same as runBehavior, except send notifications to specified keyed object"""
         pass
 
-    def runCoopAnim(self,targetKey,activeAvatarAnim,targetAvatarAnim,dist=3,move=1):
+    def runCoopAnim(self,targetKey,activeAvatarAnim,targetAvatarAnim,range=6,dist=3,move=1):
         """Seek near another avatar and run animations on both."""
         pass
 
@@ -2281,10 +2281,6 @@ class ptDynamicMap:
         """Draw text at a specified location
 - x,y is the point to start drawing the text
 - 'text' is a string of the text to be drawn"""
-        pass
-
-    def drawTextW(self,x,y,text):
-        """Unicode version of drawText"""
         pass
 
     def fillRect(self,left,top,right,bottom,color):

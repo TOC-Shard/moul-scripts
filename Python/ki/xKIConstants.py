@@ -66,6 +66,9 @@ kMaxBookAlertTime = 20.0
 kAlertKIAlert = 60
 kAlertBookAlert = 61
 
+## How many of our chat messages shall we log
+kMessageHistoryListMax = 50
+
 ## KI light responders.
 kListLightResps = ["respKILightOff","respKILightOn" ]
 
@@ -169,8 +172,8 @@ class kChat:
     FadeStopping = 3
     FadeTimeMax = 120
     FullTickTime = 1.0
-    FadeTickTime = 0.2
-    TicksOnFade = 4
+    FadeTickTime = 0.05
+    TicksOnFade = 16
     
     # Chat fonts.
     FontSizeList = [ 7, 8, 10, 12, 14 ]
@@ -186,6 +189,7 @@ class kChron:
     BuddiesOnRequest = "PlayerKIBuddiesOnRequest"
     BuddiesOnRequestType = 2
     CGZPlaying = "CGZPlaying"
+    Party = "PartyAge"
 
 ## Color definitions.
 class kColors:
@@ -246,9 +250,11 @@ class kCommands:
     EasterEggs = {"/look" : "LookAround",
                   "/get feather" : "GetFeather",
                   "/look in pocket" : "LookForFeathers"}
-    Text = {"/go" : "Put one foot in front of the other and eventually you will get there."}
-    Other = {"/saveclothing" : "SaveClothing",
-             "/loadclothing" : "LoadClothing"}
+    Text = {"/go" : "Put one foot in front of the other and eventually you will get there.",
+    Other = {"/party" : "PartyTime",
+             "/saveclothing" : "SaveClothing",
+             "/loadclothing" : "LoadClothing",
+             "/threaten" : "CoopExample"}
 
 ## Numeric limits for the KI.
 class kLimits:
