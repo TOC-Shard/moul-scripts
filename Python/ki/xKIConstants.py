@@ -188,6 +188,11 @@ class kChron:
     OnlyPMsType = 2
     BuddiesOnRequest = "PlayerKIBuddiesOnRequest"
     BuddiesOnRequestType = 2
+    ChatTimeStamp = "PlayerKIChatTimestamp"
+    ChatTimeStampType = 2
+    ChatTimeStampFormat = "PlayerKIChatTimestampFormat"
+    ChatTimeStampFormatType = 2
+    ChatTimeStampFormatDefault = "%H:%M"
     CGZPlaying = "CGZPlaying"
     Party = "PartyAge"
 
@@ -427,10 +432,16 @@ class kGUI:
     BKIKIFadeTime = 81
     BKIKIOnlyPM = 90
     BKIKIBuddyCheck = 91
+    BKIKIChatTime = 92
+    BKIKIChatTimeSec = 93
+    BKIKIChatTime24 = 94
     BKIKISettingsText = 570
     BKIKIFontSizeText = 580
     BKIKIFadeTimeText = 581
     BKIKIOnlyPMText = 590
+    BKIKIChatTimeText = 591
+    BKIKIChatTimeSecText = 592
+    BKIKIChatTime24Text = 593
     
     # Big KI - expanded volume.
     BKISoundFXVolSlider = 80

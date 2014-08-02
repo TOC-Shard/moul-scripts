@@ -43,6 +43,7 @@ You can contact Cyan Worlds, Inc. by email legal@cyan.com
 
 import re
 import time
+import datetime
 
 # Plasma Engine.
 from Plasma import *
@@ -559,6 +560,14 @@ class xKIChat(object):
         if forceKI:
             if not self.KIDisabled and not mKIdialog.isEnabled():
                 mKIdialog.show()
+
+        # Timestamp in Chat
+        if self.CheckChatTimestamps():
+            timestamp = U"[" + unicode(datetime.datetime.now().strftime(self.GetTimestampFormat())) + U"]"
+            if not pretext.startswith(U" "):
+                timestamp += U" "
+            pretext = timestamp + pretext
+
         if player is not None:
             chatHeaderFormatted = pretext + unicode(player.getPlayerName()) + U":"
             chatMessageFormatted = U" " + message
@@ -690,6 +699,20 @@ class xKIChat(object):
                 return buddies.playerlistHasPlayer(playerID)
             return False
         return True
+
+    ## Are timestamps enabled?
+    def CheckChatTimestamps(self):
+
+        entry = ptVault().findChronicleEntry(kChron.ChatTimeStamp)
+        if int(entry.chronicleGetValue()):
+            return True
+        return False
+        
+    ## Determine the timestamp format.
+    def GetTimestampFormat(self):
+
+        entry = ptVault().findChronicleEntry(kChron.ChatTimeStampFormat)
+        return entry.chronicleGetValue()
 
 
 ## A object to hold and manipulate flags for a chat message.
