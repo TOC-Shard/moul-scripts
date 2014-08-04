@@ -382,6 +382,7 @@ Page=MystlerCrazy,418
 Page=MaleLink,404
 Page=MaleLinkInChr,405
 Page=MaleKriech,406
+Page=FemaleKriech,407
 Page=krbIdle,408
 Page=krbRun,409
 Page=krbWalk,410

@@ -526,37 +526,22 @@ def OnCommand(ki, arg, cmnd, args, playerList, silent):
             avatar.avatar.oneShot(playerKey, 1, 1, "MaleWaveChr", 0, 0)
         return True
     if cmnd == 'crawl':
-        PtAvatarEnterAnimMode("MaleKriech")
+        PtAvatarEnterAnimMode("Kriech")
         name = PtGetClientName()
         ki.DisplayStatusMessage('%s starts to... crawl... somehow...' % name, 1)
         return True
     if cmnd == 'swim':
-        gender = PtGetLocalAvatar().avatar.getAvatarClothingGroup()
-        if gender == 1:
-            anim = "FemaleSwimSlow"
-        else:
-            anim = "MaleSwimSlow"
-        PtAvatarEnterAnimMode(anim)
+        PtAvatarEnterAnimMode("SwimSlow")
         name = PtGetClientName()
         ki.DisplayStatusMessage('%s starts to swim' % name, 1)
         return True
     if cmnd == 'swimfast':
-        gender = PtGetLocalAvatar().avatar.getAvatarClothingGroup()
-        if gender == 1:
-            anim = "FemaleSwimFast"
-        else:
-            anim = "MaleSwimFast"
-        PtAvatarEnterAnimMode(anim)
+        PtAvatarEnterAnimMode("SwimFast")
         name = PtGetClientName()
         ki.DisplayStatusMessage('%s starts to swim' % name, 1)
         return True
     if cmnd == 'aeroplane':
-        gender = PtGetLocalAvatar().avatar.getAvatarClothingGroup()
-        if gender == 1:
-            anim = "FemaleAeroplane"
-        else:
-            anim = "MaleAeroplane"
-        PtAvatarEnterAnimMode(anim)
+        PtAvatarEnterAnimMode("Aeroplane")
         name = PtGetClientName()
         ki.DisplayStatusMessage('%s starts to fly like an aeroplane' % name, 1)
         return True
