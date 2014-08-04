@@ -273,6 +273,11 @@ class xKI(ptModifier):
         self.jalakGUIState = False
         self.jalakScript = None
 
+        # Timestamps in chat
+        self.chatTimeStamp = False
+        self.chatTimeStampSec = False
+        self.chatTimeStamp24 = False
+
         # Miscellaneous.
         self.imagerMap = {}
         self.pelletImager = ""
@@ -1589,6 +1594,24 @@ class xKI(ptModifier):
         else:
             self.onlyAllowBuddiesOnRequest = int(entry.chronicleGetValue())
 
+        # Timestamp in Chat.
+        entry = vault.findChronicleEntry(kChron.ChatTimeStamp)
+        if entry is None:
+            vault.addChronicleEntry(kChron.ChatTimeStamp, kChron.ChatTimeStampType, str(int(self.chatTimeStamp)))
+        else:
+            self.chatTimeStamp = int(entry.chronicleGetValue())
+            
+        # Timestamp Format in Chat.
+        entry = vault.findChronicleEntry(kChron.ChatTimeStampFormat)
+        if entry is None:
+            vault.addChronicleEntry(kChron.ChatTimeStampFormat, kChron.ChatTimeStampFormatType, kChron.ChatTimeStampFormatDefault)
+        else:
+            tsFormat = ntry.chronicleGetValue()
+            if "%I" in tsFormat:
+                self.chatTimeStamp24 = True
+            if "%S" in tsFormat:
+                self.chatTimeStampSec = True
+
     ## Save the KI Flags to the Chronicle.
     def SaveKIFlags(self):
 
@@ -1608,6 +1631,28 @@ class xKI(ptModifier):
             entry.save()
         else:
             vault.addChronicleEntry(kChron.BuddiesOnRequest, kChron.BuddiesOnRequestType, str(int(self.onlyAllowBuddiesOnRequest)))
+
+        # Timestamp in Chat
+        entry = vault.findChronicleEntry(kChron.ChatTimeStamp)
+        if entry is not None:
+            entry.chronicleSetValue(str(int(self.chatTimeStamp)))
+            entry.save()
+        else:
+            vault.addChronicleEntry(kChron.ChatTimeStamp, kChron.ChatTimeStampType, str(int(self.chatTimeStamp)))
+            
+        # Timestamp Format in Chat
+        tsFormat = kChron.ChatTimeStampFormatDefault
+        if self.chatTimeStampSec:
+            tsFormat += ":%S"
+        if self.chatTimeStamp24:
+            tsFormat.replace("%H", "%I")
+            tsFormat += " %p"
+        entry = vault.findChronicleEntry(kChron.ChatTimeStampFormat)
+        if entry is not None:
+            entry.chronicleSetValue(tsFormat)
+            entry.save()
+        else:
+            vault.addChronicleEntry(kChron.ChatTimeStampFormat, kChron.ChatTimeStampFormatType, tsFormat)
 
     #~~~~~~~~~~#
     # KI Light #
@@ -3311,6 +3356,13 @@ class xKI(ptModifier):
 
         onlyPMCheckbox = ptGUIControlCheckBox(KISettings.dialog.getControlFromTag(kGUI.BKIKIOnlyPM))
         onlyPMCheckbox.setChecked(self.onlyGetPMsFromBuddies)
+        
+        chatTimeStampCheckbox = ptGUIControlCheckBox(KISettings.dialog.getControlFromTag(kGUI.BKIKIChatTime))
+        chatTimeStampCheckbox.setChecked(self.chatTimeStamp)
+        chatTimeStampSecCheckbox = ptGUIControlCheckBox(KISettings.dialog.getControlFromTag(kGUI.BKIKIChatTimeSec))
+        chatTimeStampSecCheckbox.setChecked(self.chatTimeStampSec)
+        chatTimeStamp24Checkbox = ptGUIControlCheckBox(KISettings.dialog.getControlFromTag(kGUI.BKIKIChatTime24))
+        chatTimeStamp24Checkbox.setChecked(self.chatTimeStamp24)
 
     ## Refresh the volume settings to match the current values.
     def RefreshVolumeSettings(self):
@@ -6380,6 +6432,13 @@ class xKI(ptModifier):
                 self.onlyGetPMsFromBuddies = control.isChecked()
             elif kiID == kGUI.BKIKIBuddyCheck:
                 self.onlyAllowBuddiesOnRequest = control.isChecked()
+                
+            elif kiID == kGUI.BKIKIChatTime:
+                self.chatTimeStamp = control.isChecked()
+            elif kiID == kGUI.BKIKIChatTimeSec:
+                self.chatTimeStampSec = control.isChecked()
+            elif kiID == kGUI.BKIKIChatTime24:
+                self.chatTimeStamp24 = control.isChecked()
 
     ## Process notifications originating from an expanded settings mode in the BigKI.
     # Handles the sound controls from the options menu being modified.
