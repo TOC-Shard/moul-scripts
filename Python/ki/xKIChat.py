@@ -873,7 +873,7 @@ class CommandsProcessor:
 
         # Is it a simple text-based command?
         for command, text in kCommands.Text.iteritems():
-            if msg.startswith(command):
+            if msg == command:
                 self.chatMgr.AddChatLine(None, text, 0)
                 return None
 

@@ -57,6 +57,10 @@ import time
 kEmptyGuid = '0000000000000000'
 kIntroPlayedChronicle = "IntroPlayed"
 
+# Hood Clothing
+kHoodClothing = {"56d1173b-60b0-4b02-8e2f-b7730a61b4ec" : "GuildOfSleepers",
+                 "e84fa8e5-86f0-4141-8f91-b01d4423d0c3" : "NULP"}
+
 
 class Personal(ptResponder):
 
@@ -207,19 +211,15 @@ class Personal(ptResponder):
         avatar.avatar.saveClothingToFile(str(PtGetLocalPlayer().getPlayerID()) + ".clo")
 
         #Check for Hood-specific clothing
-        vault = ptVault()
-        hoodinfo = vault.getLinkToMyNeighborhood().getAgeInfo()
-        hoodguid = hoodinfo.getAgeInstanceGuid()
+        hoodguid = ptVault().getLinkToMyNeighborhood().getAgeInfo().getAgeInstanceGuid()
         if currentgender == kFemaleClothingGroup:
             genderPrefix = "FHood_"
         else:
             genderPrefix = "MHood_"
-        #Guild of Sleepers
-        if hoodguid == "56d1173b-60b0-4b02-8e2f-b7730a61b4ec":
-            clothingName = genderPrefix + "GuildOfSleepers"
-            self.AddHoodClothing(clothingName)
-        else:
-            PtDebugPrint("No Special Hood Clothing!")
+        for shirtguid, shirtname in kHoodClothing.iteritems():
+            if hoodguid == shirtguid:
+                self.AddHoodClothing(genderPrefix + shirtname)
+                break
 
         #####REMOVING CHRONICLES#####
         remove = ["KIVirus", "KIVirusLevel"]

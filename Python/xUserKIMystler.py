@@ -28,6 +28,11 @@ def OnCommand(ki, arg, cmnd, args, playerList, silent):
         else:
             ki.DisplayStatusMessage('You have to use /linkanim 0 or 1', 0)
         return True
+    if cmnd == 'resetmarkers':
+        import xCheat
+        xCheat.ResetGZGame(0)
+        if not silent: ki.AddChatLine(None, 'Your GZ marker games have been reset.', 0)
+        return True
     if not xUserKIConfig.IsAdmin(): return False
     if cmnd == 'assassinate':
         ki.DisplayStatusMessage('OMG! %s is assassinating %s' % (PtGetClientName(), arg), 1)

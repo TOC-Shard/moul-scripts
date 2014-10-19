@@ -123,12 +123,12 @@ commands = '''=== Avatar appearance and animation commands ===
 */wave2
 */wtf
 */crazy
-*/startdance and /stopdance
 */crawl (toggle)
 */aeroplane (toggle)
 */swim (toggle)
 */swimfast (toggle)
-*/attack <target> (co-op anim)
+*/threaten <target> (co-op anim)
+*/linkanim <0|1> - Enable/Disable a funny link animation
 
 === Chat commands ===
 
@@ -211,6 +211,9 @@ commands = '''=== Avatar appearance and animation commands ===
 */enablegps - Enable KI GPS (Need to complete first 2 marker missions!)
 */kilight <time in seconds> - Light the KI (Defaults to 60 seconds)
 */export - Export current opened KI element
+*/resetmarkers - Reset your GZ marker games
+*/cod - Link to the City of Dimensions
+*/greenscreen - Greenscreen DLC must be installed!
 
 === Global shortcuts ===
 

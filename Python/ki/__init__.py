@@ -1606,7 +1606,7 @@ class xKI(ptModifier):
         if entry is None:
             vault.addChronicleEntry(kChron.ChatTimeStampFormat, kChron.ChatTimeStampFormatType, kChron.ChatTimeStampFormatDefault)
         else:
-            tsFormat = ntry.chronicleGetValue()
+            tsFormat = entry.chronicleGetValue()
             if "%I" in tsFormat:
                 self.chatTimeStamp24 = True
             if "%S" in tsFormat:
