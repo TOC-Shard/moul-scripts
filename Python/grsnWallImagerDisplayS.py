@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """ *==LICENSE==*
 
 CyanWorlds.com Engine - MMOG client, server and tools
@@ -65,20 +64,15 @@ kTeamLightsOff = 1
 
 ## game states
 
-kWaiting    = 0
-kNorthSit   = 1
-kSouthSit   = 2
-kNorthSelect = 3
-kSouthSelect = 4
-kNorthReady = 5
-kSouthReady = 6
-kNorthPlayerEntry = 7
-kSouthPlayerEntry = 8
-kGameInProgress = 9
-kNorthWin = 10
-kSouthWin = 11
-kSouthQuit = 12
-kNorthQuit = 13
+kWaiting = 0
+kSit = 1 #Sit
+kSelect = 2 #Count Blocker
+kReady = 3 #Set Blocker
+kWaitEntry = 4 #Rdy for Entry
+kPlayerEntry = 5 #Player Entry
+kGameInProgress = 6
+kWin = 7
+kQuit = 8
 
 
 class grsnWallImagerDisplayS(ptResponder):
@@ -140,10 +134,10 @@ class grsnWallImagerDisplayS(ptResponder):
         ageSDL = PtGetAgeSDL()
         value = ageSDL[VARname][0]
         state = value
-        print "grsnWallImagerDisplayS.OnSDLNotify: VARname = ",VARname," SDLname = ",SDLname," playerID = ",playerID," value = ",value
+#        print "grsnWallImagerDisplayS.OnSDLNotify: VARname = ",VARname," SDLname = ",SDLname," playerID = ",playerID," value = ",value
         
         if ((VARname == "nState") or (VARname == "sState")):
-            if ((value == kSouthSit) or (value == kNorthSit)):
+            if (value == kSit):
                 i = 0
                 while (i < 171):
                     #clear wall settings

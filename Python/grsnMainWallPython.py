@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """ *==LICENSE==*
 
 CyanWorlds.com Engine - MMOG client, server and tools
@@ -77,21 +76,23 @@ kTeamLightsBlink = 2
 
 ## game states
 
-kWaiting    = 0
-kNorthSit   = 1
-kSouthSit   = 2
-kNorthSelect = 3
-kSouthSelect = 4
-kNorthReady = 5
-kSouthReady = 6
-kNorthPlayerEntry = 7
-kSouthPlayerEntry = 8
-kGameInProgress = 9
-kNorthWin = 10
-kSouthWin = 11
-kSouthQuit = 12
-kNorthQuit = 13
+kWaiting = 0
+kSit = 1 #Sit
+kSelect = 2 #Count Blocker
+kReady = 3 #Set Blocker
+kWaitEntry = 4 #Rdy for Entry
+kPlayerEntry = 5 #Player Entry
+kGameInProgress = 6
+kWin = 7
+kQuit = 8
 
+
+WallCheck1 = 111
+WallCheck2 = 112
+WallCheck3 = 113
+GameReset = 114
+
+TOCLOGO = [36,37,46,65, 39,40,48,50,67,69,77,78, 42,43,51,70,80,81, 100,102,117,118,119,126,127, 95,103,104,112,120,121, 105,122,131, 107,124,133]
 
 class grsnMainWallPython(ptResponder):
    
@@ -177,7 +178,7 @@ class grsnMainWallPython(ptResponder):
                 NorthState = state
             else:
                 SouthState = state
-            if ((state == kSouthWin) or (state == kNorthWin) or (state == kNorthQuit) or (state == kSouthQuit)):
+            if ((state == kWin) or (state == kQuit)):
                 #display wall settings
                 i = 0
                 while (i < 20):
@@ -190,20 +191,14 @@ class grsnMainWallPython(ptResponder):
                         northWall.value[value].runAttachedResponder(kTeamLightsOn)
                         print"drawing n wall index",value
                     i = i + 1
-            elif (state == kSouthSelect):
+            elif (state == kWaiting or state == kSelect or state == kReady):
                 #clear wall settings
                 i = 0
                 while (i < 171):
-                    southWall.value[i].runAttachedResponder(kTeamLightsOff)
                     if (i < 20):
                         SouthBlockers[i] = -1
-                    i = i + 1
-            elif (state == kNorthSelect):
-                #clear wall settings
-                i = 0
-                while (i < 171):
-                    if (i < 20):
                         NorthBlockers[i] = -1
+                    southWall.value[i].runAttachedResponder(kTeamLightsOff)
                     northWall.value[i].runAttachedResponder(kTeamLightsOff)
                     i = i + 1
     
@@ -246,3 +241,56 @@ class grsnMainWallPython(ptResponder):
                         return
                 SouthBlockers[i] = -1
                 print"removed index ",index," from list slot ",i
+        
+        
+    def WallCheck(self,param):
+        i = 0
+        while (i < 171):
+            if (param == "alloff"):
+                southWall.value[i].runAttachedResponder(kTeamLightsOff)
+                northWall.value[i].runAttachedResponder(kTeamLightsOff)
+            elif (param == "allon"):
+                southWall.value[i].runAttachedResponder(kTeamLightsOn)
+                northWall.value[i].runAttachedResponder(kTeamLightsOn)
+                    
+            i = i + 1
+            
+        if (param == "toc"):
+            for index in TOCLOGO:
+                southWall.value[index].runAttachedResponder(kTeamLightsOn)
+                northWall.value[index].runAttachedResponder(kTeamLightsOn)
+        
+        
+    def OnTimer(self,id):
+        if (id == WallCheck1):
+            self.WallCheck("allon")
+            PtAtTimeCallback(self.key,2,WallCheck2)
+        elif (id == WallCheck2):
+            self.WallCheck("alloff")
+            PtAtTimeCallback(self.key,1,WallCheck3)
+        elif (id == WallCheck3):
+            self.WallCheck("toc")
+#            PtAtTimeCallback(self.key,2,WallCheck4)
+
+        elif (id == GameReset):
+            self.WallCheck("alloff")
+        
+        
+    def OnBackdoorMsg(self, target, param):
+        if target == "event":
+            if param == "wallcheck":
+                PtAtTimeCallback(self.key,1,WallCheck1)
+            elif param == "reset":
+                PtAtTimeCallback(self.key,0,GameReset)
+        elif target == "lighton":
+                southWall.value[int(param)].runAttachedResponder(kTeamLightsOn)
+                northWall.value[int(param)].runAttachedResponder(kTeamLightsOn)
+        elif target == "lightoff":
+                southWall.value[int(param)].runAttachedResponder(kTeamLightsOff)
+                northWall.value[int(param)].runAttachedResponder(kTeamLightsOff)
+        elif target == "allon":
+            self.WallCheck("allon")
+        elif target == "alloff":
+            self.WallCheck("alloff")
+        elif target == "toc":
+            self.WallCheck("toc")

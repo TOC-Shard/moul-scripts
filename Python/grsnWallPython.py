@@ -46,6 +46,7 @@ from PlasmaTypes import *
 from PlasmaKITypes import *
 from PlasmaGame import *
 from PlasmaGameConstants import *
+import time
 
 ##############################################################
 # define the attributes/parameters that we need from the 3dsMax scene
@@ -134,12 +135,12 @@ sPanelSound = ptAttribResponder(58,"s panel sound",['main','up','down','select',
 
 ######################
 
-LightS = ptAttribMaterialAnimation(61,"LightS")
-LightN = ptAttribMaterialAnimation(62,"LightN")
-LightSitN = ptAttribSceneobjectList(63, "LightSitN")
-LightSitS = ptAttribSceneobjectList(64, "LightSitS")
-LightReadyN = ptAttribSceneobjectList(65, "LightReadyN")
-LightReadyS = ptAttribSceneobjectList(66, "LightReadyS")
+LightP = ptAttribMaterialAnimation(61,"LightP")
+LightY = ptAttribMaterialAnimation(62,"LightY")
+LightPitY = ptAttribSceneobjectList(63, "LightPitY")
+LightPitP = ptAttribSceneobjectList(64, "LightPitP")
+LightReadyY = ptAttribSceneobjectList(65, "LightReadyY")
+LightReadyP = ptAttribSceneobjectList(66, "LightReadyP")
 
 ##############################################################
 # grsnWallPython
@@ -150,9 +151,9 @@ LightReadyS = ptAttribSceneobjectList(66, "LightReadyS")
 ## for team light responders
 kTeamLightsOn = 0
 kTeamLightsOff = 1
+kRedFlash = 2
 kRedOn = 3
 kRedOff = 4
-kRedFlash = 2
 
 ## for go button light states
 kDim = 0
@@ -162,25 +163,23 @@ kPulse = 2
 
 ## game states
 
-kWaiting    = 0
-kNorthSit   = 1
-kSouthSit   = 2
-kNorthSelect = 3
-kSouthSelect = 4
-kNorthReady = 5
-kSouthReady = 6
-kNorthPlayerEntry = 7
-kSouthPlayerEntry = 8
-kNorthWin = 9
-kSouthWin = 10
-kNorthQuit = 11
-kSouthQuit = 12
-kGameInProgress = 13
-#SouthState = PtClimbingWallMsgState.kWaiting
-#NorthState = PtClimbingWallMsgState.kWaiting
+kWaiting = 0
+kSit = 1 #Sit
+kSelect = 2 #Count Blocker
+kReady = 3 #Set Blocker
+kWaitEntry = 4 #Rdy for Entry
+kPlayerEntry = 5 #Player Entry
+kGameInProgress = 6
+kWin = 7
+kQuit = 8
 
-SouthState = kWaiting
-NorthState = kWaiting
+kTeleYWin = 11
+kTelePWin = 12
+kTeleYQuit = 13
+kTelePQuit = 14
+
+PurpleState = kWaiting
+YellowState = kWaiting
 
 NorthCount = 0
 BlockerCountLimit = 0
@@ -190,6 +189,32 @@ SouthWall = [-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1]
 ReceiveInit = false
 NorthBlockers = []
 SouthBlockers = []
+
+
+# Event
+Wallname = "Wall System:"
+Countdown = 101
+RunTime = 102
+PrintTimer = 103
+FinishTime = 104
+GameReset = 105
+GameResetFinish = 106
+
+WallCheck1 = 111
+WallCheck2 = 112
+WallCheck3 = 113
+WallCheck4 = 114
+
+TOCLOGO = [36,37,46,65, 39,40,48,50,67,69,77,78, 42,43,51,70,80,81, 100,102,117,118,119,126,127, 95,103,104,112,120,121, 105,122,131, 107,124,133]
+
+Countdowntimer = 6
+SpeakEnable = 1
+GameTimeOld = 0
+GameTimeStart = 0
+
+purpleplayer = ""
+yellowplayer = ""
+
 
 class grsnWallPython(ptResponder):
    
@@ -202,296 +227,6 @@ class grsnWallPython(ptResponder):
         self.id = 52392
         self.version = 4
         
-    def LookupIndex(self,index,north):
-        global NorthWall
-        global SouthWall
-        global BlockerCountLimit
-        
-        i = 0
-        print"looking north ",north
-        if (north):
-            while (i < BlockerCountLimit):
-                if (NorthWall[i] == index):
-                    print"index found in north list in slot ",i
-                    return true
-                print "north wall [",i,"] = ",NorthWall[i]
-                i = i + 1
-        else:
-            while (i < BlockerCountLimit):
-                if (SouthWall[i] == index):
-                    print"index found in south list in slot ",i
-                    return true
-                print "south wall [",i,"] = ",SouthWall[i]
-                i = i + 1
-        
-        print"index not found"
-        return false
-        
-    def SetWallIndex(self,index,value,north):
-        global NorthWall
-        global SouthWall
-        global SouthCount
-        global NorthCount
-        
-        ageSDL = PtGetAgeSDL()
-        
-        i = 0
-        if (value):
-            if (north):
-                while (NorthWall[i] >= 0):
-                    i = i + 1
-                    if (i == 20):
-                        print"yikes - somehow overran the array!"
-                        return
-                NorthWall[i] = index
-                ageSDL.setIndex("northWall", i, index)
-                NorthCount = NorthCount + 1
-                print"set north wall index ",index," in slot ",i," to true"
-            else:
-                while (SouthWall[i] >= 0):
-                    i = i + 1
-                    if (i == 20):
-                        print"yikes - somehow overran the array!"
-                        return
-                SouthWall[i] = index
-                ageSDL.setIndex("southWall", i, index)
-                SouthCount = SouthCount + 1
-                print"set south wall index ",index," in slot ",i," to true"
-        else:
-            if (north):
-                while (NorthWall[i] != index):
-                    i = i + 1
-                    if (i == 20):
-                        print"(grsnWallPython)this should not get hit - looked for non-existent NorthWall entry!"
-                        return
-                NorthWall[i] = -1
-                ageSDL.setIndex("northWall", i, -1)
-                NorthCount = NorthCount - 1
-                print"removed index ",index," from list slot ",i
-            else:
-                while (SouthWall[i] != index):
-                    i = i + 1
-                    if (i == 20):
-                        print"(grsnWallPython)this should not get hit - looked for non-existent SouthWall entry!"
-                        return
-                SouthWall[i] = -1
-                ageSDL.setIndex("southWall", i, -1)
-                SouthCount = SouthCount - 1
-                print"removed index ",index," from list slot ",i
-    
-    def ClearIndices(self,north):
-        global NorthWall
-        global SouthWall
-        global NorthCount
-        global SouthCount
-        i = 0
-        while (i < 171):
-            if (i < 20):
-                if (north):
-                    NorthWall[i] = -1
-                else:
-                    SouthWall[i] = -1
-        
-            if (north):
-                northLights.value[i].runAttachedResponder(kTeamLightsOff)
-            else:
-                southLights.value[i].runAttachedResponder(kTeamLightsOff)
-            i = i + 1
-        
-        if (north):
-            NorthCount = 0
-        else:
-            SouthCount = 0
-
-    def SetSPanelMode(self,state):
-        global NorthState
-        global SouthState
-        global NorthCount
-        global SouthCount
-        global BlockerCountLimit
-        global NorthWall
-        global SouthWall
-        
-        if (state == kWaiting):
-            #turn everything off
-            self.ResetSouthPanel(false)
-            self.ClearIndices(false)
-            sTubeExclude.clear(self.key)
-            sTubeClose.run(self.key,avatar=PtGetLocalAvatar())
-            
-        elif (state == kSouthSit):
-            #set go button to bright
-            goBtnSObject.value.runAttachedResponder(kBright)
-        elif (state == kSouthSelect):
-            self.ClearIndices(false)
-            # make all of the counter lights flash 
-            i = 0
-            while i<20:
-                southCountLights.value[i].runAttachedResponder(kRedFlash)
-                i = i + 1
-            #enable up / down buttons
-            upButtonS.enable()
-            dnButtonS.enable()
-            readyButtonS.enable()
-            fiveBtnS.enable()
-            tenBtnS.enable()
-            fifteenBtnS.enable()
-        elif (state == kSouthReady):
-            # turn unselected count lights solid, and turn off the other lights
-            i = 0
-            while i < BlockerCountLimit:
-                southCountLights.value[i].runAttachedResponder(kTeamLightsOff)
-                i = i + 1
-            i = BlockerCountLimit
-            while i < 20:
-                southCountLights.value[i].runAttachedResponder(kRedOn)
-                i = i + 1
-            #disable adjustment buttons
-            upButtonS.disable()
-            dnButtonS.disable()
-            readyButtonS.disable()
-            fiveBtnS.disable()
-            tenBtnS.disable()
-            fifteenBtnS.disable()
-            
-        elif (state == kSouthPlayerEntry):
-            #disable all panel buttons
-            self.EnableSouthButtons(false)
-            #run responder to open tube
-            if (NorthState == kNorthPlayerEntry):
-                sTubeOpen.run(self.key,avatar=PtGetLocalAvatar())
-                goBtnSObject.value.runAttachedResponder(kBright)
-                nTubeOpen.run(self.key,avatar=PtGetLocalAvatar())
-                goBtnNObject.value.runAttachedResponder(kBright)
-                print"tubes open"
-            
-
-    def SetNPanelMode(self,state):
-        global NorthState
-        global SouthState
-        global NorthCount
-        global SouthCount
-        global BlockerCountLimit
-        global NorthWall
-        global SouthWall
-        
-        print"set N Panel Mode called with state ",state
-        if (state == kWaiting):
-            #turn everything off
-            self.ResetNorthPanel(false)
-            self.ClearIndices(true)
-            nTubeExclude.clear(self.key)
-            nTubeClose.run(self.key,avatar=PtGetLocalAvatar())
-            goBtnNObject.value.runAttachedResponder(kDim)
-        elif (state == kNorthSit):
-            #set go button to bright
-            goBtnNObject.value.runAttachedResponder(kBright)
-        elif (state == kNorthSelect):
-            self.ClearIndices(true)
-            # make all of the counter lights flash 
-            i = 0
-            while i<20:
-                northCountLights.value[i].runAttachedResponder(kRedFlash)
-                print"run red flash ",i
-                i = i + 1
-            #enable up / down buttons
-            upButtonN.enable()
-            dnButtonN.enable()
-            readyButtonN.enable()
-            fiveBtnN.enable()
-            tenBtnN.enable()
-            fifteenBtnN.enable()
-            goBtnNObject.value.runAttachedResponder(kDim)
-            print"enabled all n switches"
-        elif (state == kNorthReady):
-            # turn unselected count lights solid, and turn off the other lights
-            i = 0
-            while i < BlockerCountLimit:
-                northCountLights.value[i].runAttachedResponder(kTeamLightsOff)
-                i = i + 1
-            i = BlockerCountLimit
-            while i < 20:
-                northCountLights.value[i].runAttachedResponder(kRedOn)
-                i = i + 1
-            #disable adjustment buttons
-            upButtonN.disable()
-            dnButtonN.disable()
-            readyButtonN.disable()
-            fiveBtnN.disable()
-            tenBtnN.disable()
-            fifteenBtnN.disable()
-            goBtnNObject.value.runAttachedResponder(kRedFlash)
-        elif (state == kNorthPlayerEntry):
-            #disable all panel buttons
-            self.EnableNorthButtons(false)
-            #run responder to open tube
-            if (SouthState == kSouthPlayerEntry):
-                sTubeOpen.run(self.key,avatar=PtGetLocalAvatar())
-                goBtnSObject.value.runAttachedResponder(kBright)
-                nTubeOpen.run(self.key,avatar=PtGetLocalAvatar())
-                goBtnNObject.value.runAttachedResponder(kBright)
-                print"tubes open"
-
-    def IAmMaster(self):
-        return (self.sceneobject.isLocallyOwned())
-        
-    def ChangeGameState(self,newState):
-        print "grsnWallPython: sending change game state message with state ",newState
-        ageSDL = PtGetAgeSDL()
-        if (newState in [1,3,5,7,9,11]):
-            ageSDL["nState"] = (newState,)
-        elif (newState in [2,4,6,8,10,12]):
-            ageSDL["sState"] = (newState,)
-        else:
-            ageSDL["nState"] = (newState,)
-            ageSDL["sState"] = (newState,)
-        
-    def ChangeBlockerCount(self, newCount):
-        print "grsnWallPython: sending change blocker count message with new count ",newCount
-        ageSDL = PtGetAgeSDL()
-        ageSDL["NumBlockers"] = (newCount,)
-        #gameCli = self.IGetClimbingWallGameCli()
-        #gameCli.changeNumBlockers(newCount)
-    
-    def ZeroBlockerCount(self):
-        ageSDL = PtGetAgeSDL()
-        print "grsnWallPython: sending change blocker count message with new count 0"
-        ageSDL["NumBlockers"] = (0,)
-        #gameCli = self.IGetClimbingWallGameCli()
-        #gameCli.changeBlockers(0)
-    
-    def ChangeBlockerState(self, on, index, north):
-        print "grsnWallPython: sending change blocker state message with team ", north, ", index ", index, " and on", on 
-        ageSDL = PtGetAgeSDL()
-        if (north):
-            ageSDL["nBlockerChange"] = (index,on,)
-        else:
-            ageSDL["sBlockerChange"] = (index,on,)
-        #gameCli = self.IGetClimbingWallGameCli()
-        #gameCli.changeBlocker(north, index, on)
-
-    def RequestGameState(self):
-        global NorthState
-        global SouthState
-        #global NorthWall
-        #global SouthWall
-        global BlockerCountLimit
-        ageSDL = PtGetAgeSDL()
-        
-        NorthState = ageSDL["nState"][0]
-        SouthState = ageSDL["sState"][0]
-        BlockerCountLimit = ageSDL["NumBlockers"][0]
-        for blocker in ageSDL["northWall"]:
-            if blocker >= 0:
-                self.SetWallIndex(blocker, true, true) # this updates NorthWall and NorthCount for us
-                self.ChangeNorthBlocker(blocker)
-        for blocker in ageSDL["southWall"]:
-            if blocker >= 0:
-                self.SetWallIndex(blocker, true, false) # this updates SouthWall and SouthCount for us
-                self.ChangeSouthBlocker(blocker)
-        ### synchronise client with current game state ###
-        self.SetNPanelMode(NorthState)
-        self.SetSPanelMode(SouthState)
         
     def OnServerInitComplete(self):
         global ReceiveInit
@@ -504,16 +239,8 @@ class grsnWallPython(ptResponder):
             solo = false
             ReceiveInit = true
             
-            sTubeClose.run(self.key,fastforward=true,netForce=0)
-            nTubeClose.run(self.key,fastforward=true,netForce=0)
         else:
             print"grsnWallPython: solo in climbing wall"
-
-        i = 0 #reset Wall Physics
-        while i<171:
-            southWall.value[i].physics.disable()
-            northWall.value[i].physics.disable()
-            i = i + 1
 
         ageSDL.setFlags("nChairOccupant",0,1)
         ageSDL.setFlags("sChairOccupant",0,1)
@@ -548,81 +275,317 @@ class grsnWallPython(ptResponder):
         if (solo):
             ageSDL["northWall"] = (-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,)
             ageSDL["southWall"] = (-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,)
-            self.ResetSouthPanel(false)
-            self.ResetNorthPanel(false)
-            sTubeClose.run(self.key)
-            nTubeClose.run(self.key)
             ageSDL.setIndex("nChairOccupant",0,-1)
             ageSDL.setIndex("sChairOccupant",0,-1)
             ageSDL.setIndex("nWallPlayer",0,-1)
             ageSDL.setIndex("sWallPlayer",0,-1)
             ageSDL.setIndex("nState",0,0)
             ageSDL.setIndex("sState",0,0)
-            SouthState = kWaiting
-            NorthState = kWaiting
+            self.SetPanelMode(kWaiting)
         else:
             print"requesting game state message from SDL"
             self.RequestGameState()
+            self.Tubes()
     
     def OnSDLNotify(self,VARname,SDLname,playerID,tag):
         global BlockerCountLimit
         global NorthBlockers
         global SouthBlockers
-        global NorthState
-        global SouthState
+        global YellowState
+        global PurpleState
         
         ageSDL = PtGetAgeSDL()
         value = ageSDL[VARname][0]
         print "grsnWallPython.OnSDLNotify: VARname = ",VARname," SDLname = ",SDLname," playerID = ",playerID," value = ",value
         if (VARname == "nState"):
-            NorthState = ageSDL[VARname][0]
-            if NorthState == 5:
+            YellowState = ageSDL[VARname][0]
+            if YellowState == kSelect:
+                self.SetPanelMode(kSelect)
+            if YellowState == kReady:
+                self.SetPanelMode(kReady)
+            if YellowState == kWaitEntry:
+                self.SetPanelMode(kWaitEntry)
                 if (PtGetLocalClientID() == ageSDL["nChairOccupant"][0]):
-                    print "grsnWallPython.OnSDLNotify: north Player ready...Enable BlockerMarkers for north"
-                    self.EnableNorthButtons(True)
-            self.SetNPanelMode(NorthState)
+                    print "grsnWallPython.OnSDLNotify: Yellow Player ready...Tube"
+                    self.EnableButtons("yellow","panel","disable")
+            if YellowState == kWin:
+                PtAtTimeCallback(self.key,0,FinishTime)
+                PtAtTimeCallback(self.key,10,GameReset)
+                    
         elif (VARname == "sState"):
-            SouthState = ageSDL[VARname][0]
-            if SouthState == 6:
+            PurpleState = ageSDL[VARname][0]
+            if PurpleState == kSelect:
+                self.SetPanelMode(kSelect)
+            if PurpleState == kReady:
+                self.SetPanelMode(kReady)
+            if PurpleState == kWaitEntry:
+                self.SetPanelMode(kWaitEntry)
                 if (PtGetLocalClientID() == ageSDL["sChairOccupant"][0]):
-                    print "grsnWallPython.OnSDLNotify: south Player ready...Enable BlockerMarkers for south"
-                    self.EnableSouthButtons(True)
-            self.SetSPanelMode(SouthState)
+                    print "grsnWallPython.OnSDLNotify: Purple Player ready...Tube"
+                    self.EnableButtons("purple","panel","disable")
+            if PurpleState == kWin:
+                PtAtTimeCallback(self.key,0,FinishTime)
+                PtAtTimeCallback(self.key,10,GameReset)
+                    
         elif (VARname == "NumBlockers"):
             print "grsnWallPython.OnSDLNotify(): Number of Blockers changed"
             BlockerCountLimit = ageSDL[VARname][0]
-            self.UpdateBlockerCountDisplay(1)
+            if (YellowState == kSelect):
+                self.UpdateBlockerCountDisplay("select")
+            if (YellowState == kReady):
+                self.UpdateBlockerCountDisplay("set")
+            
         elif (VARname == "nBlockerChange"):
-            team = 1
             index = ageSDL[VARname][0]
             on = ageSDL[VARname][1]
-            self.SetWallIndex(index,on,team)
+            self.SetWallIndex(index,on,"yellow")
             self.ChangeNorthBlocker(index)
             
         elif (VARname == "sBlockerChange"):
-            team = 0
             index = ageSDL[VARname][0]
             on = ageSDL[VARname][1]
-            self.SetWallIndex(index,on,team)
+            self.SetWallIndex(index,on,"purple")
             self.ChangeSouthBlocker(index)
-        self.LightPanal()
             
+        if (YellowState == kPlayerEntry and PurpleState == kPlayerEntry):
+            output = "%s Both players entered - Please wait in front of the ladder. Countdown begins in 20 sec." %Wallname
+            PtSendKIMessage(kKILocalChatStatusMsg,output)
+                
+        self.LightPanal()
+
+        
+    def SetPanelMode(self,state):
+        global purpleplayer
+        global yellowplayer
+        
+        print "grsnWallPython::SetPanelMode - state change to ", state
+        
+        if (state == kWaiting):
+            self.ResetPanelBlocker()
+            self.UpdateBlockerCountDisplay("reset")
+            self.EnableButtons("allside","all","disable")
+            self.Tubes()
+            purpleplayer = ""
+            yellowplayer = ""
+#            goBtnSObject.value.runAttachedResponder(kDim) #NOT WORK
+#            goBtnNObject.value.runAttachedResponder(kDim) #NOT WORK
+            
+#        elif (state == kSit):
+            #set go button to bright
+#            goBtnSObject.value.runAttachedResponder(kBright) #NOT WORK
+            #set go button to bright
+#            goBtnNObject.value.runAttachedResponder(kBright) #NOT WORK
+            
+        elif (state == kSelect):
+            self.ResetPanelBlocker()
+            # make all of the counter lights flash 
+            self.UpdateBlockerCountDisplay("select")
+            #enable up / down buttons
+            self.EnableButtons("allside","buttons","enable")
+#            goBtnSObject.value.runAttachedResponder(kDim) #NOT WORK
+#            goBtnNObject.value.runAttachedResponder(kDim) #NOT WORK
+            print"enabled all n switches"
+            
+        elif (state == kReady):
+            # turn unselected count lights solid, and turn off the other lights
+            self.UpdateBlockerCountDisplay("set")
+            #disable adjustment buttons
+            self.EnableButtons("allside","buttons","disable")
+            self.EnableButtons("allside","panel","enable")
+#            goBtnSObject.value.runAttachedResponder(kRedFlash) #NOT WORK
+#            goBtnNObject.value.runAttachedResponder(kRedFlash) #NOT WORK
+            
+        elif (state == kWaitEntry):
+            self.Tubes()
+#            goBtnSObject.value.runAttachedResponder(kBright) #NOT WORK
+#            goBtnNObject.value.runAttachedResponder(kBright) #NOT WORK
+
+        elif (state == kGameInProgress):
+            self.ChangeGameState("allside",kGameInProgress)
+#            goBtnSObject.value.runAttachedResponder(kBright) #NOT WORK
+#            goBtnNObject.value.runAttachedResponder(kBright) #NOT WORK
+                
+    def Tubes(self):
+        ageSDL = PtGetAgeSDL()
+        StateN = ageSDL["nState"][0]
+        StateS = ageSDL["sState"][0]
+        
+        #print "grsnWallPython::Tubes:Tubes state ",State
+            
+        if (StateN == kWaitEntry) and (StateS == kWaitEntry):
+            #run responder to open tube
+            sTubeOpen.run(self.key,avatar=PtGetLocalAvatar())
+            nTubeOpen.run(self.key,avatar=PtGetLocalAvatar())
+            print"grsnWallPython::Tubes: Tubes open"
+            
+        else:
+            sTubeExclude.clear(self.key)
+            nTubeExclude.clear(self.key)
+            sTubeClose.run(self.key,avatar=PtGetLocalAvatar(),fastforward=1)
+            nTubeClose.run(self.key,avatar=PtGetLocalAvatar(),fastforward=1)
     
-    def UpdateBlockerCountDisplay(self,flash):
+    def LookupIndex(self,index,north):
+        global NorthWall
+        global SouthWall
+        global BlockerCountLimit
+        
+        i = 0
+        print"looking north ",north
+        if (north):
+            while (i < BlockerCountLimit):
+                if (NorthWall[i] == index):
+                    print"index found in north list in slot ",i
+                    return true
+                print "yellow wall [",i,"] = ",NorthWall[i]
+                i = i + 1
+        else:
+            while (i < BlockerCountLimit):
+                if (SouthWall[i] == index):
+                    print"index found in south list in slot ",i
+                    return true
+                print "purple wall [",i,"] = ",SouthWall[i]
+                i = i + 1
+        
+        print"index not found"
+        return false
+
+    def SetWallIndex(self,index,value,side):
+        global NorthWall
+        global SouthWall
+        global SouthCount
+        global NorthCount
+        
+        ageSDL = PtGetAgeSDL()
+        
+        i = 0
+        if (value):
+            if (side == "yellow"):
+                while (NorthWall[i] >= 0):
+                    i = i + 1
+                    if (i == 20):
+                        print"yikes - somehow overran the array!"
+                        return
+                NorthWall[i] = index
+                ageSDL.setIndex("northWall", i, index)
+                NorthCount = NorthCount + 1
+                print"set side wall index ",index," in slot ",i," to true"
+            elif (side == "purple"):
+                while (SouthWall[i] >= 0):
+                    i = i + 1
+                    if (i == 20):
+                        print"yikes - somehow overran the array!"
+                        return
+                SouthWall[i] = index
+                ageSDL.setIndex("southWall", i, index)
+                SouthCount = SouthCount + 1
+                print"set south wall index ",index," in slot ",i," to true"
+        else:
+            if (side == "yellow"):
+                while (NorthWall[i] != index):
+                    i = i + 1
+                    if (i == 20):
+                        print"(grsnWallPython)this should not get hit - looked for non-existent NorthWall entry!"
+                        return
+                NorthWall[i] = -1
+                ageSDL.setIndex("northWall", i, -1)
+                NorthCount = NorthCount - 1
+                print"removed index ",index," from list slot ",i
+            elif (side == "purple"):
+                while (SouthWall[i] != index):
+                    i = i + 1
+                    if (i == 20):
+                        print"(grsnWallPython)this should not get hit - looked for non-existent SouthWall entry!"
+                        return
+                SouthWall[i] = -1
+                ageSDL.setIndex("southWall", i, -1)
+                SouthCount = SouthCount - 1
+                print"removed index ",index," from list slot ",i
+            
+
+    def IAmMaster(self):
+        return (self.sceneobject.isLocallyOwned())
+        
+    def ChangeGameState(self,side,newState):
+        print "grsnWallPython::ChangeGameState: sending change game state message with state ",newState
+        ageSDL = PtGetAgeSDL()
+        if (side == "yellow"):
+            ageSDL["nState"] = (newState,)
+        elif (side == "purple"):
+            ageSDL["sState"] = (newState,)
+        elif (side == "allside"):
+            ageSDL["nState"] = (newState,)
+            ageSDL["sState"] = (newState,)
+        
+    def ChangeBlockerCount(self, newCount):
+        global BlockerCountLimit
+        print "grsnWallPython::ChangeBlockerCount: sending change blocker count message with new count ",newCount
+        
+        BlockerCountLimit = newCount
+        
+        ageSDL = PtGetAgeSDL()
+        ageSDL["NumBlockers"] = (newCount,)
+        
+    def ChangeBlockerState(self, on, index, side):
+        print "grsnWallPython::ChangeBlockerState: sending change blocker state message with team ", side, ", index ", index, " and on", on 
+        ageSDL = PtGetAgeSDL()
+        if (side == "yellow"):
+            ageSDL["nBlockerChange"] = (index,on,)
+        elif (side == "purple"):
+            ageSDL["sBlockerChange"] = (index,on,)
+
+    def RequestGameState(self):
+        global YellowState
+        global PurpleState
+        global BlockerCountLimit
+        ageSDL = PtGetAgeSDL()
+        
+        YellowState = ageSDL["nState"][0]
+        PurpleState = ageSDL["sState"][0]
+        BlockerCountLimit = ageSDL["NumBlockers"][0]
+        for blocker in ageSDL["northWall"]:
+            if blocker >= 0:
+                self.SetWallIndex(blocker, true, true) # this updates NorthWall and NorthCount for us
+                self.ChangeNorthBlocker(blocker)
+        for blocker in ageSDL["southWall"]:
+            if blocker >= 0:
+                self.SetWallIndex(blocker, true, false) # this updates SouthWall and SouthCount for us
+                self.ChangeSouthBlocker(blocker)
+        ### synchronise client with current game state ###
+        if (YellowState != kReady):
+            self.SetPanelMode(YellowState)
+        
+    def UpdateBlockerCountDisplay(self,station):
         global BlockerCountLimit
         
         numSelected = BlockerCountLimit 
-        i = 0
-        while i < numSelected:
-            northCountLights.value[i].runAttachedResponder(kTeamLightsOn)
-            southCountLights.value[i].runAttachedResponder(kTeamLightsOn)
-            i = i + 1
-        i = numSelected
-        while i < 20:
-            northCountLights.value[i].runAttachedResponder(kRedFlash)
-            southCountLights.value[i].runAttachedResponder(kRedFlash)
-            i = i + 1
-        if (flash == 0):
+        if (station == "select"):
+            PtDebugPrint("grsnWallPython::UpdateBlockerCountDisplay - select") 
+            i = 0
+            while i < numSelected:
+                northCountLights.value[i].runAttachedResponder(kTeamLightsOn)
+                southCountLights.value[i].runAttachedResponder(kTeamLightsOn)
+                i = i + 1
+            i = numSelected
+            while i < 20:
+                northCountLights.value[i].runAttachedResponder(kRedFlash)
+                southCountLights.value[i].runAttachedResponder(kRedFlash)
+                i = i + 1
+            
+        elif (station == "set"):
+            PtDebugPrint("grsnWallPython::UpdateBlockerCountDisplay - set") 
+            i = 0
+            while i < numSelected:
+                southCountLights.value[i].runAttachedResponder(kTeamLightsOff)
+                northCountLights.value[i].runAttachedResponder(kTeamLightsOff)
+                i = i + 1
+            i = numSelected
+            while i < 20:
+                southCountLights.value[i].runAttachedResponder(kRedOn)
+                northCountLights.value[i].runAttachedResponder(kRedOn)
+                i = i + 1
+                
+        elif (station == "reset"):
+            PtDebugPrint("grsnWallPython::UpdateBlockerCountDisplay - reset") 
             i = 0
             while i < 20:
                 northCountLights.value[i].runAttachedResponder(kTeamLightsOff)
@@ -678,118 +641,237 @@ class grsnWallPython(ptResponder):
                 nPanelSound.run(self.key,avatar=PtGetLocalAvatar(),state='blockerOff')
         return
         
-    def EnableSouthButtons(self,enable):
+    def EnableButtons(self,side,station,set):
         
-        i = 0
-        while i < 171:
-            if (enable):
-                southPanel.value[i].physics.enable()
-            else:
-                southPanel.value[i].physics.disable()
-            i = i + 1
+        if (station == "panel") or (station == "all"):
+            i = 0
+            while i < 171:
+                if (set == "enable"):
+                    #PtDebugPrint("grsnWallPython::EnableButtons - Enable Panel Blocker physics") 
+                    if (side == "purple" or side == "allside"):
+                        southPanel.value[i].physics.enable()
+                    if (side == "yellow" or side == "allside"):
+                        northPanel.value[i].physics.enable()
+                if (set == "disable"):
+                    #PtDebugPrint("grsnWallPython::EnableButtons - Disable Panel Blocker physics") 
+                    if (side == "purple" or side == "allside"):
+                        southPanel.value[i].physics.disable()
+                    if (side == "yellow" or side == "allside"):
+                        northPanel.value[i].physics.disable()
+                i = i + 1
                 
-        if (enable):
-            upButtonS.enable()
-            dnButtonS.enable()
-            readyButtonS.enable()
-            fiveBtnS.enable()
-            tenBtnS.enable()
-            fifteenBtnS.enable()
-        else:
-            upButtonS.disable()
-            dnButtonS.disable()
-            readyButtonS.disable()
-            fiveBtnS.disable()
-            tenBtnS.disable()
-            fifteenBtnS.disable()
+        if (station == "buttons" or station == "all"):
+            if (set == "enable"):
+                print"grsnWallPython::EnableButtons - Enable Count Blocker Buttons"
+                # Purple
+                upButtonS.enable()
+                dnButtonS.enable()
+                readyButtonS.enable()
+                fiveBtnS.enable()
+                tenBtnS.enable()
+                fifteenBtnS.enable()
+                # Yellow
+                upButtonN.enable()
+                dnButtonN.enable()
+                readyButtonN.enable()
+                fiveBtnN.enable()
+                tenBtnN.enable()
+                fifteenBtnN.enable()
+            if (set == "disable"):
+                print"grsnWallPython::EnableButtons - Disable Count Blocker Buttons"
+                # Purple
+                upButtonS.disable()
+                dnButtonS.disable()
+                readyButtonS.disable()
+                fiveBtnS.disable()
+                tenBtnS.disable()
+                fifteenBtnS.disable()
+                # Yellow
+                upButtonN.disable()
+                dnButtonN.disable()
+                readyButtonN.disable()
+                fiveBtnN.disable()
+                tenBtnN.disable()
+                fifteenBtnN.disable()
         
-    def EnableNorthButtons(self,enable):
-        
-        i = 0
-        while i < 171:
-            if (enable):
-                northPanel.value[i].physics.enable()
-            else:
-                northPanel.value[i].physics.disable()
-            i = i + 1
-                
-        if (enable):
-            upButtonN.enable()
-            dnButtonN.enable()
-            readyButtonN.enable()
-            fiveBtnN.enable()
-            tenBtnN.enable()
-            fifteenBtnN.enable()
-        else:
-            upButtonN.disable()
-            dnButtonN.disable()
-            readyButtonN.disable()
-            fiveBtnN.disable()
-            tenBtnN.disable()
-            fifteenBtnN.disable()
-        
-    def ResetSouthPanel(self,enable):
+    def ResetPanelBlocker(self):
         global SouthCount
-        
-        self.EnableSouthButtons(enable)
-        ageSDL = PtGetAgeSDL()
-        i = 0
-        while i<171:
-            southLights.value[i].runAttachedResponder(kTeamLightsOff)
-            if (i < 20):
-                southCountLights.value[i].runAttachedResponder(kTeamLightsOff)
-            
-            if (enable == 0):
-                southWall.value[i].physics.disable()
-                #print"disabled south wall ",i
-            i = i + 1
-        
-        self.ZeroBlockerCount()
-        SouthCount = 0
-        #ageSDL.setIndex("southCount",0,0)
-        #ageSDL.setIndex("southCountLimit",0,0)
-        goBtnSObject.value.runAttachedResponder(kDim)
-        
-    def ResetNorthPanel(self,enable):
         global NorthCount
+        global NorthWall
+        global SouthWall
         
-        self.EnableNorthButtons(enable)
-        ageSDL = PtGetAgeSDL()
+        print"grsnWallPython::ResetPanelBlocker - RESETING GAME"
+        
         i = 0
-        while i<171:
-            northLights.value[i].runAttachedResponder(kTeamLightsOff)
+        while (i < 171):
             if (i < 20):
-                northCountLights.value[i].runAttachedResponder(kTeamLightsOff)
-            if (enable):
-            #    ageSDL.setIndex("northWall",i,1)
-                print"enabled north wall - this should not happen  "
-            else:
-                #ageSDL.setIndex("northWall",i,0)
-                northWall.value[i].physics.disable()
-                #print"disabled north wall ",i
+                NorthWall[i] = -1
+                SouthWall[i] = -1
+                
+            southLights.value[i].runAttachedResponder(kTeamLightsOff)
+            northLights.value[i].runAttachedResponder(kTeamLightsOff)
+            
+            southWall.value[i].physics.disable()
+            northWall.value[i].physics.disable()
+            
             i = i + 1
-        self.ZeroBlockerCount()
+        
+        self.ChangeBlockerCount(0)
         NorthCount = 0
-        #ageSDL.setIndex("northCount",0,0)
-        #ageSDL.setIndex("northCountLimit",0,0)
-        goBtnNObject.value.runAttachedResponder(kDim)
+        SouthCount = 0
+        
+        print"grsnWallPython::ResetPanelBlocker - RESETING GAME - FINISHED"
+    
+        
+    def EventBlockerChange(self,param):
+        self.ResetPanelBlocker()
+        self.ChangeBlockerCount(int(param))
+        self.ChangeGameState("allside",kReady)
+    
+    def WallCheck(self,param):
+        i = 0
+        while (i < 171):
+            if (param == "alloff"):
+                if (i < 1):
+                    self.UpdateBlockerCountDisplay("reset")
+                    self.ResetPanelBlocker()
+            elif (param == "allon"):
+                if (i < 20):
+                    southCountLights.value[i].runAttachedResponder(kTeamLightsOn)
+                    northCountLights.value[i].runAttachedResponder(kTeamLightsOn)
+                southLights.value[i].runAttachedResponder(kTeamLightsOn)
+                northLights.value[i].runAttachedResponder(kTeamLightsOn)
+                    
+            i = i + 1
+            
+        if (param == "toc"):
+            for index in TOCLOGO:
+                southLights.value[index].runAttachedResponder(kTeamLightsOn)
+                northLights.value[index].runAttachedResponder(kTeamLightsOn)
+    
+    
     
     def OnTimer(self,id):
+        global YellowState
+        global PurpleState
+        global GameTimeStart
+        global GameTimeOld
+        global Countdowntimer
+        global purpleplayer
+        global yellowplayer
+        
         avatar = PtGetLocalAvatar()
-        if (id == kNorthQuit):
+        if (id == kTeleYQuit):
             PtFakeLinkAvatarToObject(avatar.getKey(),nTeamWinTeleport.value.getKey())
-            PtAtTimeCallback(self.key, 10, kSouthWin)
-        elif (id == kSouthQuit):
+            PtWearMaintainerSuit(avatar.getKey(),false)
+            PtSendKIMessage(kEnableEntireYeeshaBook,0)
+            if (YellowState == kGameInProgress):
+                self.ChangeGameState("purple",kWin)
+                self.ChangeGameState("yellow",kQuit)
+        elif (id == kTelePQuit):
             PtFakeLinkAvatarToObject(avatar.getKey(),sTeamWinTeleport.value.getKey())
-            PtAtTimeCallback(self.key, 10, kNorthWin)
-        elif (id == kNorthWin):
-            PtGetLocalAvatar().avatar.exitSubWorld()
-        elif (id == kSouthWin):
-            PtGetLocalAvatar().avatar.exitSubWorld()
+            PtWearMaintainerSuit(avatar.getKey(),false)
+            PtSendKIMessage(kEnableEntireYeeshaBook,0)
+            if (PurpleState == kGameInProgress):
+                self.ChangeGameState("yellow",kWin)
+                self.ChangeGameState("purple",kQuit)
+        elif (id == kTeleYWin):
+#            PtFakeLinkAvatarToObject(avatar.getKey(),nTeamWinTeleport.value.getKey())
+            PtWearMaintainerSuit(avatar.getKey(),false)
+            PtSendKIMessage(kEnableEntireYeeshaBook,0)
+            if (PurpleState == kGameInProgress):
+                self.ChangeGameState("yellow",kWin)
+                self.ChangeGameState("purple",kQuit)
+#            PtGetLocalAvatar().avatar.exitSubWorld()
+        elif (id == kTelePWin):
+#            PtFakeLinkAvatarToObject(avatar.getKey(),sTeamWinTeleport.value.getKey())
+            PtWearMaintainerSuit(avatar.getKey(),false)
+            PtSendKIMessage(kEnableEntireYeeshaBook,0)
+            if (YellowState == kGameInProgress):
+                self.ChangeGameState("purple",kWin)
+                self.ChangeGameState("yellow",kQuit)
+#            PtGetLocalAvatar().avatar.exitSubWorld()
+            
+        elif (id == Countdown):
+            if (Countdowntimer == 0):
+                output = "%s GO" %Wallname
+                PtSendKIMessage(kKILocalChatStatusMsg,output)
+                Countdowntimer = 6
+                GameTimeStart = PtGetDniTime()
+                self.SetPanelMode(kGameInProgress)
+                PtAtTimeCallback(self.key,300,RunTime)
+            elif (Countdowntimer == 6):
+                if ((YellowState == kPlayerEntry) and (PurpleState == kPlayerEntry)):
+                    output = "%s Start in" %Wallname
+                    PtSendKIMessage(kKILocalChatStatusMsg,output)
+                    Countdowntimer -= 1
+                    PtAtTimeCallback(self.key,1,Countdown)
+                else:
+                    output = "%s Players not ready" %Wallname
+                    PtSendKIMessage(kKILocalChatStatusMsg,output)
+            else:
+                output = "%s %s" % (Wallname,Countdowntimer)
+                PtSendKIMessage(kKILocalChatStatusMsg,output)
+                Countdowntimer -= 1
+                PtAtTimeCallback(self.key,1,Countdown)
+                
+        elif (id == RunTime):
+            nexttime = PtGetDniTime() - GameTimeStart
+            if ((GameTimeOld == GameTimeStart) and (GameTimeStart != 0)):
+                consumedtime = PtGetDniTime() - GameTimeStart
+                time = self.TimeConvert(consumedtime)
+                output = "%s Elapsed Time: %s" % (Wallname,time)
+                PtSendKIMessage(kKILocalChatStatusMsg,output)
+                PtAtTimeCallback(self.key,300,RunTime)
+            else:
+                if (nexttime == 300):
+                    GameTimeOld = GameTimeStart
+                    PtAtTimeCallback(self.key,0,RunTime)
+                    
+        elif (id == FinishTime):
+            if (GameTimeStart != 0):
+                consumedtime = PtGetDniTime() - GameTimeStart
+                time = self.TimeConvert(consumedtime)
+                
+                if (PurpleState == kWin):
+                    playerwin = purpleplayer
+                    playerlost = yellowplayer
+                elif (YellowState == kWin):
+                    playerwin = yellowplayer
+                    playerlost = purpleplayer
+                    
+                output = "%s Player %s has WON after %s" % (Wallname,playerwin,time)
+                PtSendKIMessage(kKILocalChatStatusMsg,output)
+                output2 = "%s Player %s has lost" % (Wallname,playerlost)
+                PtSendKIMessage(kKILocalChatStatusMsg,output2)
+                
+                GameTimeStart = 0
+                GameTimeOld = 0
+                
+        elif (id == GameReset):
+            output = "%s Wall will reset in 10 sec" % (Wallname)
+            PtSendKIMessage(kKILocalChatStatusMsg,output)
+            PtAtTimeCallback(self.key,10,GameResetFinish)
+                
+        elif (id == GameResetFinish):
+            self.SetPanelMode(kWaiting)
+            self.ChangeGameState("allside",kWaiting)
+            output = "%s Wall has reset" % (Wallname)
+            PtSendKIMessage(kKILocalChatStatusMsg,output)
+            
+        elif (id == WallCheck1):
+            self.WallCheck("allon")
+            PtAtTimeCallback(self.key,2,WallCheck2)
+        elif (id == WallCheck2):
+            self.WallCheck("alloff")
+            PtAtTimeCallback(self.key,1,WallCheck3)
+        elif (id == WallCheck3):
+            self.WallCheck("toc")
+            
    
     def OnNotify(self,state,id,events):
-        global NorthState
-        global SouthState
+        global YellowState
+        global PurpleState
         global NorthCount
         global SouthCount
         global BlockerCountLimit
@@ -797,14 +879,16 @@ class grsnWallPython(ptResponder):
         global SouthWall
         global nTrigger
         global sTrigger
+        global purpleplayer
+        global yellowplayer
         
         print "grsnWall - Notify ",state,id,events
         ageSDL = PtGetAgeSDL()
         avatar = PtFindAvatar(events)
-        southState = SouthState
-        northState = NorthState
-        print"southState = ",southState
-        print"northState = ",northState
+        PurpleState = PurpleState
+        YellowState = YellowState
+        print"PurpleState = ",PurpleState
+        print"YellowState = ",YellowState
             
         # responder / behavior notifications
         
@@ -813,7 +897,7 @@ class grsnWallPython(ptResponder):
                 if (event[0] == kMultiStageEvent and event[1] == 0 and event[2] == kEnterStage):
                     print"start touching quit jewel, warp out"
                     if (avatar == PtGetLocalAvatar()):
-                        PtAtTimeCallback(self.key ,1 ,kSouthQuit)
+                        PtAtTimeCallback(self.key ,1 ,kTelePQuit)
                     return
         
         if (id == nQuitBehavior.id):
@@ -821,7 +905,7 @@ class grsnWallPython(ptResponder):
                 if (event[0] == kMultiStageEvent and event[1] == 0 and event[2] == kEnterStage):
                     print"start touching quit jewel, warp out"
                     if (avatar == PtGetLocalAvatar()):
-                        PtAtTimeCallback(self.key ,1 ,kNorthQuit)
+                        PtAtTimeCallback(self.key ,1 ,kTeleYQuit)
                     return
                     
         if (id == nTubeOpen.id):
@@ -839,7 +923,12 @@ class grsnWallPython(ptResponder):
                     if (avatar == PtGetLocalAvatar()):
                         PtWearMaintainerSuit(PtGetLocalAvatar().getKey(),true)
                         PtSendKIMessage(kDisableEntireYeeshaBook,0)
+                    nTubeExclude.clear(self.key)
                     avatar.physics.warpObj(sTeamWarpPt.value.getKey())
+                    self.ChangeGameState("yellow",kPlayerEntry)
+                    if (PurpleState == kPlayerEntry):
+                        PtAtTimeCallback(self.key,20,Countdown)
+                    
                     
         if (id == sTubeOpen.id):
             print"tube finished opening"
@@ -856,51 +945,54 @@ class grsnWallPython(ptResponder):
                     if (avatar == PtGetLocalAvatar()):
                         PtWearMaintainerSuit(PtGetLocalAvatar().getKey(),true)
                         PtSendKIMessage(kDisableEntireYeeshaBook,0)
+                    sTubeExclude.clear(self.key)
                     avatar.physics.warpObj(nTeamWarpPt.value.getKey())
+                    self.ChangeGameState("purple",kPlayerEntry)
+                    if (YellowState == kPlayerEntry):
+                        PtAtTimeCallback(self.key,20,Countdown)
                     
-        
         
         # activator notifications
         if ((id == sTeamWin.id) and (PtGetLocalAvatar() == PtFindAvatar(events))):
-            print"you win"
+            print"Purple - you win"
             PtFakeLinkAvatarToObject(avatar.getKey(),sTeamWinTeleport.value.getKey())
             #avatar.physics.warpObj(sTeamWinTeleport.value.getKey())
-            self.ChangeGameState(kSouthWin)
-            self.ChangeGameState(kNorthQuit)
-            PtAtTimeCallback(self.key, 9, kSouthWin)
-            #ageSDL.setIndex("sChairState",0,kSouthWin)
-            #ageSDL.setIndex("nChairState",0,kNorthQuit)
+#            self.ChangeGameState("purple",kWin)
+#            self.ChangeGameState("yellow",kQuit)
+            PtAtTimeCallback(self.key, 1, kTelePWin)
+            #ageSDL.setIndex("sChairState",0,kWin)
+            #ageSDL.setIndex("nChairState",0,kQuit)
             
         if ((id == nTeamWin.id) and (PtGetLocalAvatar() == PtFindAvatar(events))):
-            print"you win"
+            print"Yellow - you win"
             PtFakeLinkAvatarToObject(avatar.getKey(),nTeamWinTeleport.value.getKey())
             #avatar.physics.warpObj(nTeamWinTeleport.value.getKey())
-            self.ChangeGameState(kNorthWin)
-            self.ChangeGameState(kSouthQuit)
-            PtAtTimeCallback(self.key, 9, kNorthWin)
-            #ageSDL.setIndex("sChairState",0,kSouthQuit)
-            #ageSDL.setIndex("nChairState",0,kNorthWin)
+#            self.ChangeGameState("yellow",kWin)
+#            self.ChangeGameState("purple",kQuit)
+            PtAtTimeCallback(self.key, 1, kTeleYWin)
+            #ageSDL.setIndex("sChairState",0,kQuit)
+            #ageSDL.setIndex("nChairState",0,kWin)
             
         if (id == nTeamQuit.id and state):
             if (avatar == PtGetLocalAvatar()):
                 avatar.avatar.runBehaviorSetNotify(nQuitBehavior.value,self.key,nQuitBehavior.netForce)
-            self.ChangeGameState(kNorthQuit)
-            self.ChangeGameState(kSouthWin)
+#            self.ChangeGameState("yellow",kQuit)
+#            self.ChangeGameState("purple",kWin)
             nTrigger = avatar
             #PtAtTimeCallback(self.key, 1.5, knQuit)
-            #ageSDL.setIndex("sChairState",0,kSouthWin)
-            #ageSDL.setIndex("nChairState",0,kNorthQuit)
+            #ageSDL.setIndex("sChairState",0,kWin)
+            #ageSDL.setIndex("nChairState",0,kQuit)
             return
             
         if (id == sTeamQuit.id and state):
             if (avatar == PtGetLocalAvatar()):
                 avatar.avatar.runBehaviorSetNotify(sQuitBehavior.value,self.key,sQuitBehavior.netForce)
-            self.ChangeGameState(kNorthWin)
-            self.ChangeGameState(kSouthQuit)
+#            self.ChangeGameState("yellow",kWin)
+#            self.ChangeGameState("purple",kQuit)
             sTrigger = avatar
             #PtAtTimeCallback(self.key, 1.5, ksQuit)
-            #ageSDL.setIndex("sChairState",0,kSouthQuit)
-            #ageSDL.setIndex("nChairState",0,kNorthWin)
+            #ageSDL.setIndex("sChairState",0,kQuit)
+            #ageSDL.setIndex("nChairState",0,kWin)
             return    
         
         #if (not(state) and (id != nTubeEntry.id)):
@@ -912,27 +1004,24 @@ class grsnWallPython(ptResponder):
             if state:
                 occupant = ageSDL["sChairOccupant"][0]
                 print"occupant ",occupant
+                purpleplayer = PtGetClientName(avatar.getKey())
                 if (avID == PtGetClientIDFromAvatarKey(PtGetLocalAvatar().getKey())):
                     print"sitting down in south chair"
                     southChair.disable()
                     ageSDL.setIndex("sChairOccupant",0,avID)
-                    if (southState == kWaiting or southState == kSouthWin or southState == kSouthQuit):
-                        self.ChangeGameState(kSouthSit)
-                    #if (northState == PtClimbingWallMsgState.kNorthQuit or northState == PtClimbingWallMsgState.kNorthWin):
-                        #self.ChangeGameState(PtClimbingWallMsgState.kWaiting)
-                    #ageSDL.setIndex("sChairState",0,kSouthSit)
+                    if (PurpleState == kWaiting):
+                        self.ChangeGameState("purple", kSit)
                     return
         
         if id==sChairSit.id:
             for event in events:
                 if event[0]==6 and event[1]==1 and state == 0:
-                    if (1):
-                        print"standing up from south chair"
-                        southChair.enable()
-                        ageSDL.setIndex("sChairOccupant",0,-1)
-                        self.LightPanal()
-                            
-                    return            
+                    print"standing up from south chair"
+                    southChair.enable()
+                    ageSDL.setIndex("sChairOccupant",0,-1)
+                    if (PurpleState == kSit):
+                        self.ChangeGameState("purple", kWaiting)
+                    return
                             
         if (id == northChair.id):
             print"clicked north chair"
@@ -940,26 +1029,24 @@ class grsnWallPython(ptResponder):
             if state:
                 occupant = ageSDL["nChairOccupant"][0]
                 print"occupant ",occupant
+                yellowplayer = PtGetClientName(avatar.getKey())
                 if (avID == PtGetClientIDFromAvatarKey(PtGetLocalAvatar().getKey())):
                     print"sitting down in north chair"
                     northChair.disable()
                     ageSDL.setIndex("nChairOccupant",0,avID)
-                    if (northState == kWaiting or northState == kNorthWin or northState == kNorthQuit):
-                        self.ChangeGameState(kNorthSit)
-                        #if (southState == PtClimbingWallMsgState.kSouthQuit or southState == PtClimbingWallMsgState.kSouthWin):
-                            #self.ChangeGameState(PtClimbingWallMsgState.kWaiting)
+                    if (YellowState == kWaiting):
+                        self.ChangeGameState("yellow", kSit)
                     return
         
         if id==nChairSit.id:
             for event in events:
                 if event[0]==6 and event[1]==1 and state == 0:
-                    if (1):
-                        print"standing up from north chair"
-                        northChair.enable()
-                        ageSDL.setIndex("nChairOccupant",0,-1)
-                        self.LightPanal()
-                            
-                    return            
+                    print"standing up from north chair"
+                    northChair.enable()
+                    ageSDL.setIndex("nChairOccupant",0,-1)
+                    if (YellowState == kSit):
+                        self.ChangeGameState("yellow", kWaiting)
+                    return
                             
         
         elif not state:
@@ -967,85 +1054,38 @@ class grsnWallPython(ptResponder):
 
         elif id == goButtonS.id:
             print"picked s go button"
-            if (southState == kSouthSit and northState == kNorthSit):
-                print"reset blocker physics (south)"
-                i = 0 #reset Wall Physics
-                while i<171:
-                    northWall.value[i].physics.disable()
-                    southWall.value[i].physics.disable()
-                    i = i + 1
-                print"reset North/South Count"
-                NorthCount = 0
-                SouthCount = 0
-                if (avatar != PtGetLocalAvatar()):
-                    return
-                print"set index to kSouthSelect"
-                self.ClearIndices(false)
-                self.ChangeGameState(kSouthSelect)
+            if (PurpleState == kSit and YellowState == kSit):
+                print"set index to kSelect"
+                self.ChangeGameState("allside", kSelect)
                 sPanelSound.run(self.key,avatar=PtGetLocalAvatar(),state='main')
-                ageSDL["northWall"] = (-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,)
-                ageSDL["southWall"] = (-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,)
-                if (northState == kWaiting or northState == kNorthSit or \
-                    northState == kNorthWin or northState == kNorthQuit ):
-                    print"force north chair to keep up"
-                    self.ChangeGameState(kNorthSelect)
-            elif(southState == kSouthReady):
-                if (avatar != PtGetLocalAvatar()):
-                    return
-                print"check to see if you've used all your wall blockers"
-                #numSelected = ageSDL["southCount"][0]
-                #maxSelections = ageSDL["southCountLimit"][0]               
+            elif(PurpleState == kReady):
+                print"check to see if you've used all your wall blockers"          
                 numSelected = SouthCount
                 maxSelections = BlockerCountLimit
                 print"numSelected = ", numSelected, ", maxSelections = ", BlockerCountLimit
                 if (numSelected < maxSelections):
                     sPanelSound.run(self.key,avatar=PtGetLocalAvatar(),state='denied')
                 else:
-                    #ageSDL.setIndex("sChairState",0,kSouthPlayerEntry)
-                    self.ChangeGameState(kSouthPlayerEntry)
+                    self.ChangeGameState("purple",kWaitEntry)
                     sPanelSound.run(self.key,avatar=PtGetLocalAvatar(),state='gameStart')
             return
 
         elif id == goButtonN.id:
             print"picked n go button"
-            if (northState == kNorthSit and southState == kSouthSit):
-                print"reset blocker physics (north)"
-                i = 0 #reset Wall Physics
-                while i<171:
-                    northWall.value[i].physics.disable()
-                    southWall.value[i].physics.disable()
-                    i = i + 1
-                print"reset North/South Count"
-                NorthCount = 0
-                SouthCount = 0
-                if (avatar != PtGetLocalAvatar()):
-                    return
-                print"set index to kNorthSelect"
-                self.ClearIndices(true)
-                self.ChangeGameState(kNorthSelect)
-                sPanelSound.run(self.key,avatar=PtGetLocalAvatar(),state='main')
-                ageSDL["northWall"] = (-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,)
-                ageSDL["southWall"] = (-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,)
-                if (southState == kWaiting or southState == kSouthSit or \
-                    southState == kSouthWin or southState == kSouthQuit):
-                    self.ChangeGameState(kSouthSelect)
-                    #ageSDL.setIndex("sChairState",0,kSouthSelect)
-                    print"force south chair to keep up"
-            elif(northState == kNorthReady):
-                if (avatar != PtGetLocalAvatar()):
-                    return
-                print"check to see if you've used all your wall blockers"
-                #numSelected = ageSDL["southCount"][0]
-                #maxSelections = ageSDL["southCountLimit"][0]               
+            if (YellowState == kSit and PurpleState == kSit):
+                print"set index to kSelect"
+                self.ChangeGameState("allside", kSelect)
+                nPanelSound.run(self.key,avatar=PtGetLocalAvatar(),state='main')
+            elif(YellowState == kReady):
+                print"check to see if you've used all your wall blockers"       
                 numSelected = NorthCount
                 maxSelections = BlockerCountLimit
                 print"numSelected = ", numSelected, ", maxSelections = ", BlockerCountLimit
                 if (numSelected < maxSelections):
-                    sPanelSound.run(self.key,avatar=PtGetLocalAvatar(),state='denied')
+                    nPanelSound.run(self.key,avatar=PtGetLocalAvatar(),state='denied')
                 else:
-                    #ageSDL.setIndex("sChairState",0,kSouthPlayerEntry)
-                    self.ChangeGameState(kNorthPlayerEntry)
-                    sPanelSound.run(self.key,avatar=PtGetLocalAvatar(),state='gameStart')
+                    self.ChangeGameState("yellow",kWaitEntry)
+                    nPanelSound.run(self.key,avatar=PtGetLocalAvatar(),state='gameStart')
             return
 
         if (avatar != PtGetLocalAvatar()):
@@ -1054,133 +1094,136 @@ class grsnWallPython(ptResponder):
         
         if (id == nTubeEntry.id):
             nTrigger = PtFindAvatar(events)
-            print"entered team 1 tube, run behavior"
+            print"entered team purple tube, run behavior"
             ageSDL.setIndex("nWallPlayer",0,PtGetClientIDFromAvatarKey(avatar.getKey()))
             avatar.avatar.runBehaviorSetNotify(nTubeMulti.value,self.key,nTubeMulti.netForce)
             #PtAtTimeCallback(self.key, 0.5, knEnter)
             
         if (id == sTubeEntry.id):
             sTrigger = PtFindAvatar(events)
-            print"entered team 2 tube, run behavior"
+            print"entered team yellow tube, run behavior"
             ageSDL.setIndex("sWallPlayer",0,PtGetClientIDFromAvatarKey(avatar.getKey()))
             avatar.avatar.runBehaviorSetNotify(sTubeMulti.value,self.key,sTubeMulti.netForce)
             #PtAtTimeCallback(self.key, 0.5, ksEnter)
         
         if id == upButtonS.id:
             print "up button south"
-            if (southState == kSouthSelect):
+            if (PurpleState == kSelect):
+                numSelected = BlockerCountLimit
                 print"correct state, blocker count limit ",BlockerCountLimit
-                if (BlockerCountLimit < 20):
-                    self.ChangeBlockerCount(BlockerCountLimit + 1)                    
+                if (numSelected < 20):
+                    self.ChangeBlockerCount(numSelected + 1)                    
                     sPanelSound.run(self.key,avatar=PtGetLocalAvatar(),state='up')
+                elif (numSelected == 20):
+                    sPanelSound.run(self.key,avatar=PtGetLocalAvatar(),state='denied')
                 else:
                     print"somehow think blocker count limit greater than 20?"
             return
+            
         elif id == dnButtonS.id:
             print "down button south"
-            if (southState == kSouthSelect):
-                if (BlockerCountLimit > 0):
-                    self.ChangeBlockerCount(BlockerCountLimit - 1)
+            if (PurpleState == kSelect):
+                numSelected = BlockerCountLimit
+                if (numSelected > 1):
+                    self.ChangeBlockerCount(numSelected - 1)
                     sPanelSound.run(self.key,avatar=PtGetLocalAvatar(),state='down')
-                    
+                elif (numSelected == 1):
+                    sPanelSound.run(self.key,avatar=PtGetLocalAvatar(),state='denied')
             return
+            
         elif id == fiveBtnS.id:
             print"five button south"
-            if (southState == kSouthSelect):
+            if (PurpleState == kSelect):
                 self.ChangeBlockerCount(5)
                 sPanelSound.run(self.key,avatar=PtGetLocalAvatar(),state='up')
             return
+            
         elif id == tenBtnS.id:
             print"ten button south"
-            if (southState == kSouthSelect):
+            if (PurpleState == kSelect):
                 self.ChangeBlockerCount(10)
                 sPanelSound.run(self.key,avatar=PtGetLocalAvatar(),state='up')
             return
+            
         elif id == fifteenBtnS.id:
             print"fifteen button south"
-            if (southState == kSouthSelect):
+            if (PurpleState == kSelect):
                 self.ChangeBlockerCount(15)
                 sPanelSound.run(self.key,avatar=PtGetLocalAvatar(),state='up')
             return
             
         elif id == readyButtonS.id:
             print "ready button south"
-            if (southState == kSouthSelect):
-                self.ChangeGameState(kSouthReady)
-                sPanelSound.run(self.key,avatar=PtGetLocalAvatar(),state='select')
-                if (northState == kNorthSelect):
-                    self.ChangeGameState(kNorthReady)
+            if (PurpleState == kSelect):
+                numSelected = BlockerCountLimit
+                if (numSelected > 0):
+                    self.ChangeGameState("purple",kReady)
+                    sPanelSound.run(self.key,avatar=PtGetLocalAvatar(),state='select')
+                    if (YellowState == kSelect):
+                        self.ChangeGameState("yellow",kReady)
+                else:
+                    sPanelSound.run(self.key,avatar=PtGetLocalAvatar(),state='denied')
             else:
                 sPanelSound.run(self.key,avatar=PtGetLocalAvatar(),state='denied')
-             
             return
         
         if id == upButtonN.id:
             print "up button north"
-            if (northState == kNorthSelect):
-                #numSelected = ageSDL["northCountLimit"][0]
+            if (YellowState == kSelect):
                 numSelected = BlockerCountLimit
                 if (numSelected < 20):
-                    numSelected = numSelected + 1
-                    #ageSDL.setIndex("northCountLimit",0,numSelected)
-                    self.ChangeBlockerCount(numSelected)
+                    self.ChangeBlockerCount(numSelected + 1)
                     nPanelSound.run(self.key,avatar=PtGetLocalAvatar(),state='up')
-                    #if (southState == kSouthSelect):
-                    #    ageSDL.setIndex("southCountLimit",0,numSelected)
-                    
+                elif (numSelected == 20):
+                    nPanelSound.run(self.key,avatar=PtGetLocalAvatar(),state='denied')
+                else:
+                    print"somehow think blocker count limit greater than 20?"
             return
+            
         elif id == dnButtonN.id:
             print "down button north"
-            if (northState == kNorthSelect):
-                #numSelected = ageSDL["northCountLimit"][0]
+            if (YellowState == kSelect):
                 numSelected = BlockerCountLimit
                 if (numSelected > 0):
-                    numSelected = numSelected - 1
-                    #ageSDL.setIndex("northCountLimit",0,numSelected)
-                    self.ChangeBlockerCount(numSelected)
+                    self.ChangeBlockerCount(numSelected - 1)
                     nPanelSound.run(self.key,avatar=PtGetLocalAvatar(),state='down')
-                    #if (southState == kSouthSelect):
-                    #    ageSDL.setIndex("southCountLimit",0,numSelected)
-                    
+                elif (BlockerCountLimit == 1):
+                    nPanelSound.run(self.key,avatar=PtGetLocalAvatar(),state='denied')
             return
+            
         elif id == fiveBtnN.id:
             print"five button north"
-            if (northState == kNorthSelect):
+            if (YellowState == kSelect):
                 self.ChangeBlockerCount(5)
-                #ageSDL.setIndex("northCountLimit",0,5)
                 nPanelSound.run(self.key,avatar=PtGetLocalAvatar(),state='up')
-                #if (southState == kSouthSelect):
-                #    ageSDL.setIndex("southCountLimit",0,5)
             return
+            
         elif id == tenBtnN.id:
             print"ten button north"
-            if (northState == kNorthSelect):
+            if (YellowState == kSelect):
                 self.ChangeBlockerCount(10)
-                #ageSDL.setIndex("northCountLimit",0,10)
                 nPanelSound.run(self.key,avatar=PtGetLocalAvatar(),state='up')
-                #if (southState == kSouthSelect):
-                #    ageSDL.setIndex("southCountLimit",0,10)
             return
+            
         elif id == fifteenBtnN.id:
             print"fifteen button north"
-            if (northState == kNorthSelect):
+            if (YellowState == kSelect):
                 self.ChangeBlockerCount(15)
-                #ageSDL.setIndex("northCountLimit",0,15)
                 nPanelSound.run(self.key,avatar=PtGetLocalAvatar(),state='up')
-                #if (southState == kSouthSelect):
-                #    ageSDL.setIndex("southCountLimit",0,15)
             return
             
         elif id == readyButtonN.id:
             print "ready button north"
-            if (northState == kNorthSelect):
-                self.ChangeGameState(kNorthReady)
-                #ageSDL.setIndex("nChairState",0,kNorthReady)
-                nPanelSound.run(self.key,avatar=PtGetLocalAvatar(),state='select')
-                if (southState == kSouthSelect):
-                    self.ChangeGameState(kSouthReady)
-                    #ageSDL.setIndex("sChairState",0,kSouthReady)
-                    print"force south chair to keep up"
+            if (YellowState == kSelect):
+                numSelected = BlockerCountLimit
+                if (numSelected > 0):
+                    self.ChangeGameState("yellow",kReady)
+                    nPanelSound.run(self.key,avatar=PtGetLocalAvatar(),state='select')
+                    if (PurpleState == kSelect):
+                        self.ChangeGameState("purple",kReady)
+                        print"force south chair to keep up"
+                else:
+                    nPanelSound.run(self.key,avatar=PtGetLocalAvatar(),state='denied')
             else:
                 nPanelSound.run(self.key,avatar=PtGetLocalAvatar(),state='denied')
             return
@@ -1207,7 +1250,7 @@ class grsnWallPython(ptResponder):
                         return
                         
                 if (north): #you picked something on the north panel
-                    if (northState != kNorthReady):
+                    if (YellowState != kReady):
                         print"no blocker picking for you!"
                         nPanelSound.run(self.key,avatar=PtGetLocalAvatar(),state='denied')
                         return
@@ -1227,7 +1270,7 @@ class grsnWallPython(ptResponder):
                         #ageSDL.setIndex("northCount",0,numSelected)
                         #NorthCount = numSelected
                         #self.SetWallIndex(index,true,true)
-                        self.ChangeBlockerState(true, index, true)
+                        self.ChangeBlockerState(true, index, "yellow")
                     else:
                         numSelected = numSelected - 1
                         if (numSelected == -1):
@@ -1236,9 +1279,9 @@ class grsnWallPython(ptResponder):
                         #ageSDL.setIndex("northCount",0,numSelected)
                         #NorthCount = numSelected
                         #self.SetWallIndex(index,false,true)
-                        self.ChangeBlockerState(false,index,true)
+                        self.ChangeBlockerState(false,index,"yellow")
                 else: #you picked one on the south panel
-                    if (southState != kSouthReady):
+                    if (PurpleState != kReady):
                         print"no blocker picking for you!"
                         sPanelSound.run(self.key,avatar=PtGetLocalAvatar(),state='denied')
                         return
@@ -1258,7 +1301,7 @@ class grsnWallPython(ptResponder):
                         #ageSDL.setIndex("southCount",0,numSelected)
                         #SouthCount = numSelected
                         #self.SetWallIndex(index,true,false)
-                        self.ChangeBlockerState(true,index,false)
+                        self.ChangeBlockerState(true,index,"purple")
                     else:
                         numSelected = numSelected - 1
                         if (numSelected == -1):
@@ -1267,91 +1310,102 @@ class grsnWallPython(ptResponder):
                         #ageSDL.setIndex("southCount",0,numSelected)
                         #SouthCount = numSelected
                         #self.SetWallIndex(index,false,false)
-                        self.ChangeBlockerState(false,index,false)
+                        self.ChangeBlockerState(false,index,"purple")
 
     def LightPanal(self):
-        global NorthState
-        global SouthState
+        global YellowState
+        global PurpleState
         
         ageSDL = PtGetAgeSDL()
         nSit = ageSDL["nChairOccupant"][0]
         sSit = ageSDL["sChairOccupant"][0]
         
-        LightS.animation.speed(1)
-        LightS.animation.stop()
-        LightS.animation.skipToTime(0.16)
-        LightN.animation.speed(1)
-        LightN.animation.stop()
-        LightN.animation.skipToTime(0.16)
+        LightP.animation.speed(1)
+        LightP.animation.stop()
+        LightP.animation.skipToTime(0.16)
+        LightY.animation.speed(1)
+        LightY.animation.stop()
+        LightY.animation.skipToTime(0.16)
         
-        if NorthState == 0 or SouthState == 0:
-            i = 0
-            while i < 2:
-                LightSitN.value[i].draw.disable()
-                LightSitS.value[i].draw.disable()
-                LightReadyN.value[i].draw.disable()
-                LightReadyS.value[i].draw.disable()
-                i = i + 1
-        if NorthState == 3 or SouthState == 4:
-            LightS.animation.play()
-            LightN.animation.play()
-
-        if nSit > -1:
-            i = 0
-            while i < 2:
-                LightSitN.value[i].draw.enable()
-                i = i + 1
-        else:
-            i = 0
-            while i < 2:
-                LightSitN.value[i].draw.disable()
-                i = i + 1
-
-        if sSit > -1:
-            i = 0
-            while i < 2:
-                LightSitS.value[i].draw.enable()
-                i = i + 1
-        else:
-            i = 0
-            while i < 2:
-                LightSitS.value[i].draw.disable()
-                i = i + 1
-
-        if NorthState > 6 and NorthState < 10:
-            i = 0
-            while i < 2:
-                LightReadyN.value[i].draw.enable()
-                i = i + 1
-        else:
-            i = 0
-            while i < 2:
-                LightReadyN.value[i].draw.disable()
-                i = i + 1
+        if (YellowState == kSelect or PurpleState == kSelect):
+            LightP.animation.play()
+            LightY.animation.play()
             
-        if SouthState > 7 and SouthState < 11:
-            i = 0
-            while i < 2:
-                LightReadyS.value[i].draw.enable()
-                i = i + 1
-        else:
-            i = 0
-            while i < 2:
-                LightReadyS.value[i].draw.disable()
-                i = i + 1
-
-        if NorthState == 9:
-            LightN.animation.speed(0.25)
-            LightN.animation.play()
-            i = 0
-            while i < 2:
-                LightReadyS.value[i].draw.disable()
-                i = i + 1
+        if YellowState == kWin:
+            LightY.animation.speed(0.25)
+            LightY.animation.play()
             
-        if SouthState == 10:
-            LightS.animation.speed(0.25)
-            LightS.animation.play()
-            i = 0
-            while i < 2:
-                LightReadyN.value[i].draw.disable()
-                i = i + 1
+        if PurpleState == kWin:
+            LightP.animation.speed(0.25)
+            LightP.animation.play()
+            
+        i = 0
+        while i < 2:
+            if (YellowState == kWaiting or PurpleState == kWaiting):
+                LightPitY.value[i].draw.disable()
+                LightPitP.value[i].draw.disable()
+                LightReadyY.value[i].draw.disable()
+                LightReadyP.value[i].draw.disable()
+
+            if nSit > -1:
+                LightPitY.value[i].draw.enable()
+            else:
+                LightPitY.value[i].draw.disable()
+
+            if sSit > -1:
+                LightPitP.value[i].draw.enable()
+            else:
+                LightPitP.value[i].draw.disable()
+
+            if (YellowState == kWaitEntry or YellowState == kWin):
+                LightReadyY.value[i].draw.enable()
+            else:
+                LightReadyY.value[i].draw.disable()
+            
+            if (PurpleState == kWaitEntry or PurpleState == kWin):
+                LightReadyP.value[i].draw.enable()
+            else:
+                LightReadyP.value[i].draw.disable()
+
+            if YellowState == kWin:
+                LightReadyP.value[i].draw.disable()
+            
+            if PurpleState == kWin:
+                LightReadyY.value[i].draw.disable()
+            
+            i = i + 1
+
+            
+    def TimeConvert(self, sec):
+        t = time.localtime(sec)
+        endcalls = time.strftime("%M:%S", t)
+        return endcalls
+        
+        
+    def OnBackdoorMsg(self, target, param):
+        if target == "event":
+            if param == "wallcheck":
+                output = "%s Welcome to the TOC Wall Tournament!" % Wallname
+                PtSendKIMessage(kKILocalChatStatusMsg,output)
+                PtAtTimeCallback(self.key,1,WallCheck1)
+            elif param == "countdown":
+                PtAtTimeCallback(self.key,1,Countdown)
+            elif param == "finish":
+                PtAtTimeCallback(self.key,1,FinishTime)
+            elif param == "reset":
+                PtAtTimeCallback(self.key,0,GameResetFinish)
+        elif target == "prep":
+            self.EventBlockerChange(param)
+        elif target == "lighton":
+            southLights.value[int(param)].runAttachedResponder(kTeamLightsOn)
+            northLights.value[int(param)].runAttachedResponder(kTeamLightsOn)
+        elif target == "lightoff":
+            southLights.value[int(param)].runAttachedResponder(kTeamLightsOff)
+            northLights.value[int(param)].runAttachedResponder(kTeamLightsOff)
+        elif target == "allon":
+            self.WallCheck("allon")
+        elif target == "alloff":
+            self.WallCheck("alloff")
+        elif target == "toc":
+            self.WallCheck("toc")
+                
