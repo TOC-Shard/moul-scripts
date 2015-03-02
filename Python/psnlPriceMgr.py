@@ -17,7 +17,8 @@ HeekWinners = [
 ]
 WallWinners = [
     3349, # Scarchu
-    103367 # Jogi
+    103367, # Jogi
+    339385 # Leonie
 ]
 
 
