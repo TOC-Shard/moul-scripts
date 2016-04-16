@@ -103,7 +103,7 @@ def GetArg(ki, cmnd, args, usage, condition1, callback1 = 0, condition2 = 0, cal
 def GetObject(ki, name, playerList, mustHaveCoord = True):
     # check for avatar
     player = GetPlayer(ki, name, playerList, showError=False)
-    if player and xUserKIConfig.IsAdmin():
+    if player:
         try: return PtGetAvatarKeyFromClientID(player.getPlayerID()).getSceneObject() # the player might be in a different age
         except: pass
     # check for scene object
@@ -126,6 +126,8 @@ def GetPlayer(ki, name, playerList, showError = True, thisAgeOnly = False):
     name = name.lower()
     if name == 'me':
         return PtGetLocalPlayer()
+    if not xUserKIConfig.IsAdmin():
+        return None
     # ok, look for the player
     result = None
     for player in playerList: # There are also folders in that list, so make sure we only process the correct types
