@@ -53,6 +53,7 @@ from PlasmaNetConstants import *
 from PlasmaTypes import *
 from PlasmaVaultConstants import *
 
+import xCensor
 import xLocTools
 
 # xKI sub-modules.
@@ -68,10 +69,9 @@ import xUserKI
 class xKIChat(object):
 
     ## Set up the chat manager's default state.
-    def __init__(self, StartFadeTimer, ResetFadeState, FadeCompletely):
+    def __init__(self, StartFadeTimer, ResetFadeState, FadeCompletely, GetCensorLevel):
 
         # Set the default properties.
-        self.autoShout = False
         self.chatLogFile = None
         self.gFeather = 0
         self.isAdmin = False
@@ -97,6 +97,7 @@ class xKIChat(object):
         self.StartFadeTimer = StartFadeTimer
         self.ResetFadeState = ResetFadeState
         self.FadeCompletely = FadeCompletely
+        self.GetCensorLevel = GetCensorLevel
 
         # Add the commands processor.
         self.commandsProcessor = CommandsProcessor(self)
@@ -213,13 +214,8 @@ class xKIChat(object):
         iSelect = userListBox.getSelection()
         selPlyrList = []
 
-        # Is it a message to all players in the current Age?
-        if msg.startswith(PtGetLocalizedString("KI.Commands.ChatAllAge")):
-            listenerOnly = False
-            message = message[len(PtGetLocalizedString("KI.Commands.ChatAllAge")) + 1:]
-
         # Is it a reply to a private message?
-        elif msg.startswith(PtGetLocalizedString("KI.Commands.ChatReply")):
+        if msg.startswith(PtGetLocalizedString("KI.Commands.ChatReply")):
             if self.toReplyToLastPrivatePlayerID is None:
                 self.AddChatLine(None, PtGetLocalizedString("KI.Chat.NoOneToReply"), kChat.SystemMessage)
                 return
@@ -381,14 +377,7 @@ class xKIChat(object):
 
                 # Is it a folder of players within listening distance?
                 elif isinstance(toPlyr, KIFolder):
-                    if self.autoShout:
-                        listenerOnly = False
-                    else:
-                        listenerOnly = True
-                        selPlyrList = self.GetPlayersInChatDistance()
-                        agePlayers = PtGetPlayerListDistanceSorted()
-                        if len(agePlayers) > 0 and len(selPlyrList) == 0:
-                            nobodyListening = True
+                    listenerOnly = False
 
         # Add message to player's private chat channel.
         cFlags.channel = self.privateChatChannel
@@ -423,6 +412,9 @@ class xKIChat(object):
 
         # Fix for Character of Doom (CoD).
         (message, RogueCount) = re.subn("[\x00-\x08\x0a-\x1f]", "", message)
+
+        # Censor the chat message to their taste
+        message = xCensor.xCensor(message, self.GetCensorLevel())
 
         if self.KILevel == kMicroKI:
             mKIdialog = KIMicro.dialog
@@ -529,7 +521,7 @@ class xKIChat(object):
                     self.AddPlayerToRecents(player.getPlayerID())
 
                     # Are we mentioned in the message?
-                    if message.lower().find(PtGetLocalPlayer().getPlayerName().lower()) >= 0:
+                    if message.lower().find(PtGetClientName().lower()) >= 0:
                         bodyColor = kColors.ChatMessageMention
                         forceKI = True
                         PtFlashWindow()
@@ -572,25 +564,26 @@ class xKIChat(object):
             pretext = timestamp + pretext
 
         if player is not None:
-            chatHeaderFormatted = pretext + unicode(player.getPlayerName()) + U":"
-            chatMessageFormatted = U" " + message
+            separator = "" if pretext.endswith(" ") else " "
+            chatHeaderFormatted = U"{}{}{}:".format(pretext, separator, player.getPlayerNameW())
+            chatMessageFormatted = U" {}".format(message)
         else:
             # It must be a status or error message.
             chatHeaderFormatted = pretext
-            if pretext == U"":
-                chatMessageFormatted = message
+            if not pretext:
+                chatMessageFormatted = U"{}".format(message)
             else:
-                chatMessageFormatted = " " + message
+                chatMessageFormatted = U" {}".format(message)
 
         chatArea = ptGUIControlMultiLineEdit(mKIdialog.getControlFromTag(kGUI.ChatDisplayArea))
+        chatArea.beginUpdate()
         savedPosition = chatArea.getScrollPosition()
         wasAtEnd = chatArea.isAtEnd()
         chatArea.moveCursor(PtGUIMultiLineDirection.kBufferEnd)
-        chatArea.insertStringW(U"\n")
         chatArea.insertColor(headerColor)
 
         # Added unicode support here.
-        chatArea.insertStringW(chatHeaderFormatted)
+        chatArea.insertStringW(U"\n{}".format(chatHeaderFormatted))
         chatArea.insertColor(bodyColor)
         chatArea.insertStringW(chatMessageFormatted)
         chatArea.moveCursor(PtGUIMultiLineDirection.kBufferEnd)
@@ -608,16 +601,17 @@ class xKIChat(object):
             while chatArea.getBufferSize() > kChat.MaxChatSize and chatArea.getBufferSize() > 0:
                 PtDebugPrint(u"xKIChat.AddChatLine(): Max chat buffer size reached. Removing top line.", level=kDebugDumpLevel)
                 chatArea.deleteLinesFromTop(1)
+        chatArea.endUpdate()
 
         # Copy all the data to the miniKI if the user upgrades it.
         if self.KILevel == kMicroKI:
             chatArea2 = ptGUIControlMultiLineEdit(KIMini.dialog.getControlFromTag(kGUI.ChatDisplayArea))
+            chatArea2.beginUpdate()
             chatArea2.moveCursor(PtGUIMultiLineDirection.kBufferEnd)
-            chatArea2.insertStringW(U"\n")
             chatArea2.insertColor(headerColor)
 
             # Added unicode support here.
-            chatArea2.insertStringW(chatHeaderFormatted)
+            chatArea2.insertStringW(U"\n{}".format(chatHeaderFormatted))
             chatArea2.insertColor(bodyColor)
             chatArea2.insertStringW(chatMessageFormatted)
             chatArea2.moveCursor(PtGUIMultiLineDirection.kBufferEnd)
@@ -625,9 +619,9 @@ class xKIChat(object):
             if chatArea2.getBufferSize() > kChat.MaxChatSize:
                 while chatArea2.getBufferSize() > kChat.MaxChatSize and chatArea2.getBufferSize() > 0:
                     chatArea2.deleteLinesFromTop(1)
+            chatArea2.endUpdate()
 
         # Update the fading controls.
-        mKIdialog.refreshAllControls()
         self.ResetFadeState()
 
     ## Display a status message to the player (or players if net-propagated).
@@ -1100,15 +1094,6 @@ class CommandsProcessor:
                             self.chatMgr.DisplayStatusMessage(PtGetLocalizedString("KI.Player.Removed"))
                             return
             self.chatMgr.AddChatLine(None, PtGetLocalizedString("KI.Player.NumberOnly"), kChat.SystemMessage)
-
-    ## Enable or disable AutoShout mode in the chat.
-    def AutoShout(self, params):
-
-        self.chatMgr.autoShout = abs(self.chatMgr.autoShout - 1)
-        if self.chatMgr.autoShout:
-            self.chatMgr.AddChatLine(None, PtGetLocalizedString("KI.Messages.AutoShoutEnabled"), kChat.BroadcastMsg)
-        else:
-            self.chatMgr.AddChatLine(None, PtGetLocalizedString("KI.Messages.AutoShoutDisabled"), kChat.BroadcastMsg)
 
     ## Dumps logs to the specified destination.
     def DumpLogs(self, destination):

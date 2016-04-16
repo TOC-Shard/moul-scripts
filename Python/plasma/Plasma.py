@@ -2407,8 +2407,18 @@ class ptGameScore:
         pass
 
     @staticmethod
+    def findAgeHighScores(name, maxScores, key):
+        """Finds the highest matching scores for the current age's owners"""
+        pass
+
+    @staticmethod
     def findGlobalScores(scoreName, key):
         """Finds matching global scores"""
+        pass
+
+    @staticmethod
+    def findGlobalHighScores(name, maxScores, key):
+        """Finds the highest matching scores"""
         pass
 
     @staticmethod
@@ -4195,6 +4205,9 @@ class ptGUIControlMultiLineEdit(ptGUIControl):
         """None"""
         pass
 
+    def beginUpdate(self):
+        """Signifies that the control will be updated heavily starting now, so suppress all redraws"""
+
     def clearBuffer(self):
         """Clears all text from the multi-line edit control."""
         pass
@@ -4225,6 +4238,10 @@ class ptGUIControlMultiLineEdit(ptGUIControl):
 
     def enableScrollControl(self):
         """Enables the scroll control if there is one"""
+        pass
+
+    def endUpdate(self, redraw=True):
+        """Signifies that the massive updates are over. We can now redraw."""
         pass
 
     def focus(self):
@@ -5922,6 +5939,10 @@ class ptPlayer:
 
     def getPlayerName(self):
         """Returns the name of the player"""
+        pass
+
+    def getPlayerNameW(self):
+        """Returns the name of the player as Unicode"""
         pass
 
     def isCCR(self):

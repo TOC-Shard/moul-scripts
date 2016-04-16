@@ -286,7 +286,7 @@ class xKI(ptModifier):
         self.autocompleteState = AutocompleteState()
 
         ## The chatting manager.
-        self.chatMgr = xKIChat.xKIChat(self.StartFadeTimer, self.ResetFadeState, self.FadeCompletely)
+        self.chatMgr = xKIChat.xKIChat(self.StartFadeTimer, self.ResetFadeState, self.FadeCompletely, self.GetCensorLevel)
 
         xUserKI.KIManager = self
         xUserKI.OnEarlyInit(self.chatMgr)
@@ -1029,10 +1029,10 @@ class xKI(ptModifier):
                 self.gGZMarkerInRange = value[0]
                 self.gGZMarkerInRangeRepy = value[1]
                 self.RefreshMiniKIMarkerDisplay()
-                if not KIMini.dialog.isEnabled():
-                    NewItemAlert.dialog.show()
-                    KIAlert = ptGUIControlButton(NewItemAlert.dialog.getControlFromTag(kAlertKIAlert))
-                    KIAlert.show()
+                # Show alert
+                NewItemAlert.dialog.show()
+                KIAlert = ptGUIControlButton(NewItemAlert.dialog.getControlFromTag(kAlertKIAlert))
+                KIAlert.show()
         elif command == kGZOutRange:
             self.gGZMarkerInRange = 0
             self.gGZMarkerInRangeRepy = None
@@ -1196,9 +1196,6 @@ class xKI(ptModifier):
             # Is it a private channel message that can't be listened to?
             if cFlags.broadcast and cFlags.channel != self.chatMgr.privateChatChannel:
                 return
-
-            # Censor the message to the player's taste.
-            message = xCensor.xCensor(message, self.censorLevel)
 
             # Is the message from an ignored plaer?
             vault = ptVault()
@@ -2665,6 +2662,9 @@ class xKI(ptModifier):
             self.censorLevel = int(entry.chronicleGetValue())
         PtDebugPrint(u"xKI.DetermineCensorLevel(): The censor level is {}.".format(self.censorLevel), level=kWarningLevel)
 
+    def GetCensorLevel(self):
+        return self.censorLevel
+
     #~~~~~~~#
     # Fonts #
     #~~~~~~~#
@@ -2788,7 +2788,7 @@ class xKI(ptModifier):
         if not self.chatMgr.fadeEnableFlag:
             return
         if not BigKI.dialog.isEnabled():
-            if self.chatMgr.fadeMode == kChat.FadeNotActive:
+            if self.chatMgr.fadeMode in (kChat.FadeNotActive, kChat.FadeDone):
                 PtAtTimeCallback(self.key, kChat.FullTickTime, kTimers.Fade)
             self.chatMgr.fadeMode = kChat.FadeFullDisp
             self.currentFadeTick = self.chatMgr.ticksOnFull
@@ -2800,17 +2800,22 @@ class xKI(ptModifier):
             mKIdialog = KIMicro.dialog
         else:
             mKIdialog = KIMini.dialog
-        if self.chatMgr.fadeMode != kChat.FadeNotActive:
+
+        # Optimization: only do this if we are fading or have faded
+        if self.chatMgr.fadeMode in (kChat.FadeDoingFade, kChat.FadeDone):
+            mKIdialog.setForeColor(-1, -1, -1, self.originalForeAlpha)
+            mKIdialog.setSelectColor(-1, -1, -1, self.originalSelectAlpha)
+            if self.KILevel == kNormalKI:
+                playerlist = ptGUIControlListBox(mKIdialog.getControlFromTag(kGUI.PlayerList))
+                playerlist.show()
+            chatArea = ptGUIControlMultiLineEdit(mKIdialog.getControlFromTag(kGUI.ChatDisplayArea))
+            chatArea.enableScrollControl()
+            mKIdialog.refreshAllControls()
+
+        # Toggle state
+        if self.chatMgr.fadeMode not in (kChat.FadeNotActive, kChat.FadeDone):
             self.chatMgr.fadeMode = kChat.FadeStopping
         self.currentFadeTick = self.chatMgr.ticksOnFull
-        mKIdialog.setForeColor(-1, -1, -1, self.originalForeAlpha)
-        mKIdialog.setSelectColor(-1, -1, -1, self.originalSelectAlpha)
-        if self.KILevel == kNormalKI:
-            playerlist = ptGUIControlListBox(mKIdialog.getControlFromTag(kGUI.PlayerList))
-            playerlist.show()
-        chatArea = ptGUIControlMultiLineEdit(mKIdialog.getControlFromTag(kGUI.ChatDisplayArea))
-        chatArea.enableScrollControl()
-        mKIdialog.refreshAllControls()
 
     def ResetFadeState(self, force=False):
         """This turns the chat fade OFF and resets it if the user is not chatting.
@@ -2843,7 +2848,7 @@ class xKI(ptModifier):
             if self.KILevel == kNormalKI:
                 playerlist = ptGUIControlListBox(mKIdialog.getControlFromTag(kGUI.PlayerList))
                 playerlist.hide()
-            self.chatMgr.fadeMode = kChat.FadeNotActive
+            self.chatMgr.fadeMode = kChat.FadeDone
 
     #~~~~~~#
     # Ages #
@@ -3682,7 +3687,7 @@ class xKI(ptModifier):
         curBrainMode = PtGetLocalAvatar().avatar.getCurrentMode()
         toggleCB = ptGUIControlCheckBox(KIMini.dialog.getControlFromTag(kGUI.miniToggleBtnID))
         toggleCB.disable()
-        if curBrainMode == PtBrainModes.kNonGeneric or curBrainMode == PtBrainModes.kAFK or curBrainMode == PtBrainModes.kSit:
+        if curBrainMode == PtBrainModes.kNonGeneric:
             PtDebugPrint(u"xKI.ShowBigKI(): Entering LookingAtKI mode.", level=kDebugDumpLevel)
             PtAvatarEnterLookingAtKI()
             self.isPlayingLookingAtKIMode = True

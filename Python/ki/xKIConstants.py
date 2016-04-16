@@ -170,6 +170,7 @@ class kChat:
     FadeFullDisp = 1
     FadeDoingFade = 2
     FadeStopping = 3
+    FadeDone = 4
     FadeTimeMax = 120
     FullTickTime = 1.0
     FadeTickTime = 0.05
@@ -244,7 +245,6 @@ class kCommands:
                  PtGetLocalizedString("KI.Commands.RemoveBuddy") : "RemoveBuddy",
                  PtGetLocalizedString("KI.Commands.Ignore") : "IgnorePlayer",
                  PtGetLocalizedString("KI.Commands.Unignore") : "UnignorePlayer",
-                 PtGetLocalizedString("KI.Commands.AutoShout") : "AutoShout",
                  PtGetLocalizedString("KI.Commands.DumpLogs") : "DumpLogs",
                  PtGetLocalizedString("KI.Commands.DumpLog") : "DumpLogs",
                  PtGetLocalizedString("KI.Commands.ChangePassword") : "ChangePassword"}
