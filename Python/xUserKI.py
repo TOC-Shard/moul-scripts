@@ -103,7 +103,7 @@ def GetArg(ki, cmnd, args, usage, condition1, callback1 = 0, condition2 = 0, cal
 def GetObject(ki, name, playerList, mustHaveCoord = True):
     # check for avatar
     player = GetPlayer(ki, name, playerList, showError=False)
-    if player:
+    if player and xUserKIConfig.IsAdmin():
         try: return PtGetAvatarKeyFromClientID(player.getPlayerID()).getSceneObject() # the player might be in a different age
         except: pass
     # check for scene object
