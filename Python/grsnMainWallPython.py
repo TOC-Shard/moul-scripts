@@ -1,296 +1,60 @@
-""" *==LICENSE==*
-
-CyanWorlds.com Engine - MMOG client, server and tools
-Copyright (C) 2011  Cyan Worlds, Inc.
-
-This program is free software: you can redistribute it and/or modify
-it under the terms of the GNU General Public License as published by
-the Free Software Foundation, either version 3 of the License, or
-(at your option) any later version.
-
-This program is distributed in the hope that it will be useful,
-but WITHOUT ANY WARRANTY; without even the implied warranty of
-MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-GNU General Public License for more details.
-
-You should have received a copy of the GNU General Public License
-along with this program.  If not, see <http://www.gnu.org/licenses/>.
-
-Additional permissions under GNU GPL version 3 section 7
-
-If you modify this Program, or any covered work, by linking or
-combining it with any of RAD Game Tools Bink SDK, Autodesk 3ds Max SDK,
-NVIDIA PhysX SDK, Microsoft DirectX SDK, OpenSSL library, Independent
-JPEG Group JPEG library, Microsoft Windows Media SDK, or Apple QuickTime SDK
-(or a modified version of those libraries),
-containing parts covered by the terms of the Bink SDK EULA, 3ds Max EULA,
-PhysX SDK EULA, DirectX SDK EULA, OpenSSL and SSLeay licenses, IJG
-JPEG Library README, Windows Media SDK EULA, or QuickTime SDK EULA, the
-licensors of this Program grant you additional
-permission to convey the resulting work. Corresponding Source for a
-non-source form of such a combination shall include the source code for
-the parts of OpenSSL and IJG JPEG Library used as well as that of the covered
-work.
-
-You can contact Cyan Worlds, Inc. by email legal@cyan.com
- or by snail mail at:
-      Cyan Worlds, Inc.
-      14617 N Newport Hwy
-      Mead, WA   99021
-
- *==LICENSE==* """
-# Include Plasma code
+#imports
 from Plasma import *
 from PlasmaTypes import *
+from grsnWallConstants import *
 
-# for save/load
-import cPickle
-
-## COMMENTED OUT by Jeff due to the re-write in the garrison wall
-
-##############################################################
-# define the attributes/parameters that we need from the 3dsMax scene
-##############################################################
-northWall = ptAttribSceneobjectList(1,"North Wall Decals",byObject=1)
-southWall = ptAttribSceneobjectList(2,"South Wall Decals",byObject=1)
-northBlocker = ptAttribSceneobjectList(3,"North Wall Blockers",byObject=1)
-southBlocker = ptAttribSceneobjectList(4,"South Wall Blockers",byObject=1)
-##############################################################
-# grsnMainWallPython
-##############################################################
-
-## keep track of what to draw
-NorthBlockers = [-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1]
-SouthBlockers = [-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1]
-
-ReceiveInit = false
-
-NorthState = 0
-SouthState = 0
-
-
-## for team light responders
-kTeamLightsOn = 0
-kTeamLightsOff = 1
-kTeamLightsBlink = 2
-
-## game states
-
-kWaiting = 0
-kSit = 1 #Sit
-kSelect = 2 #Count Blocker
-kReady = 3 #Set Blocker
-kWaitEntry = 4 #Rdy for Entry
-kPlayerEntry = 5 #Player Entry
-kGameInProgress = 6
-kWin = 7
-kQuit = 8
-
-
-WallCheck1 = 111
-WallCheck2 = 112
-WallCheck3 = 113
-GameReset = 114
-
-TOCLOGO = [36,37,46,65, 39,40,48,50,67,69,77,78, 42,43,51,70,80,81, 100,102,117,118,119,126,127, 95,103,104,112,120,121, 105,122,131, 107,124,133]
+#Max wire
+yWall = ptAttribSceneobjectList(1, "Yellow Wall Decals", byObject=1)
+pWall = ptAttribSceneobjectList(2, "Purple Wall Decals", byObject=1)
+yBlockers = ptAttribSceneobjectList(3, "Yellow Blocker objects", byObject=1)
+pBlockers = ptAttribSceneobjectList(4, "Purple Blocker objects", byObject=1)
 
 class grsnMainWallPython(ptResponder):
-   
-    # constants
     
     def __init__(self):
-        "construction"
-        PtDebugPrint("grsnMainWallPython::init begin")
+        PtDebugPrint("grsnMainWallPython::init")
         ptResponder.__init__(self)
         self.id = 52394
-        self.version = 1
-        PtDebugPrint("grsnMainWallPython::init end")        
-    
-    def OnServerInitComplete(self):
-        global ReceiveInit
-        
-        ageSDL = PtGetAgeSDL()
-        PtDebugPrint("grsnWallPython::OnServerInitComplete")        
-        solo = true
-        if len(PtGetPlayerList()):
-            solo = false
-            ReceiveInit = true
-            return
-        else:
-            print"solo in climbing wall"
-            
-        #ageSDL.setFlags("nState",0,1)
-        #ageSDL.setFlags("sState",0,1)
-        #ageSDL.setFlags("NumBlockers",0,1)
-        #ageSDL.setFlags("nBlockerChange",0,1)
-        #ageSDL.setFlags("sBlockerChange",0,1)
-        
-        ageSDL.setNotify(self.key,"nState",0.0)
-        ageSDL.setNotify(self.key,"sState",0.0)
-        ageSDL.setNotify(self.key,"NumBlockers",0.0)
-        ageSDL.setNotify(self.key,"nBlockerChange",0.0)
-        ageSDL.setNotify(self.key,"sBlockerChange",0.0)
-        
-        #ageSDL.sendToClients("nState")
-        #ageSDL.sendToClients("sState")
-        #ageSDL.sendToClients("NumBlockers")
-        #ageSDL.sendToClients("nBlockerChange")
-        #ageSDL.sendToClients("sBlockerChange")
-    
-    def OnClimbingBlockerEvent(self,blocker):
-        
-        print"looking for blocker named ",blocker.getName()
-        i = 0
-        while i < 171:
-            if (northBlocker.value[i] == blocker):
-                northWall.value[i].runAttachedResponder(kTeamLightsBlink)
-                print"found matching texture named ",northWall.value[i].getName()
-                return
-            elif (southBlocker.value[i] == blocker):
-                southWall.value[i].runAttachedResponder(kTeamLightsBlink)
-                print"found matching texture named ",southWall.value[i].getName()
-                return
-            i = i + 1
-        
-    def OnSDLNotify(self,VARname,SDLname,playerID,tag):
-        global NorthState
-        global SouthState
-        
-        ageSDL = PtGetAgeSDL()
-        value = ageSDL[VARname][0]
-        print "grsnMainWallPython.OnSDLNotify: VARname = ",VARname," SDLname = ",SDLname," playerID = ",playerID," value = ",value
-        
-        if (VARname == "nBlockerChange"):
-            team = 1
-            index = ageSDL[VARname][0]
-            on = ageSDL[VARname][1]
-            self.SetWallIndex(index,on,team)
-            
-        elif (VARname == "sBlockerChange"):
-            team = 0
-            index = ageSDL[VARname][0]
-            on = ageSDL[VARname][1]
-            self.SetWallIndex(index,on,team)
-        
-        elif ((VARname == "nState") or (VARname == "sState")):
-            state = value
-            if (VARname == "nState"):
-                NorthState = state
-            else:
-                SouthState = state
-            if ((state == kWin) or (state == kQuit)):
-                #display wall settings
-                i = 0
-                while (i < 20):
-                    value = SouthBlockers[i] 
-                    if (value > -1):
-                        southWall.value[value].runAttachedResponder(kTeamLightsOn)
-                        print"drawing s wall index",value
-                    value = NorthBlockers[i] 
-                    if (value >  -1):
-                        northWall.value[value].runAttachedResponder(kTeamLightsOn)
-                        print"drawing n wall index",value
-                    i = i + 1
-            elif (state == kWaiting or state == kSelect or state == kReady):
-                #clear wall settings
-                i = 0
-                while (i < 171):
-                    if (i < 20):
-                        SouthBlockers[i] = -1
-                        NorthBlockers[i] = -1
-                    southWall.value[i].runAttachedResponder(kTeamLightsOff)
-                    northWall.value[i].runAttachedResponder(kTeamLightsOff)
-                    i = i + 1
-    
-    def SetWallIndex(self,index,value,north):
-        global SouthBlockers
-        global NorthBlockers
-        
-        i = 0
-        if (value):
-            if (north):
-                while (NorthBlockers[i] >= 0):
-                    i = i + 1
-                    if (i == 20):
-                        print"yikes - somehow overran the array!"
-                        return
-                NorthBlockers[i] = index
-                print"set north wall index ",index," in slot ",i," to true"
-            else:
-                while (SouthBlockers[i] >= 0):
-                    i = i + 1
-                    if (i == 20):
-                        print"yikes - somehow overran the array!"
-                        return
-                SouthBlockers[i] = index
-                print"set south wall index ",index," in slot ",i," to true"
-        else:
-            if (north):
-                while (NorthBlockers[i] != index):
-                    i = i + 1
-                    if (i == 20):
-                        print"this should not get hit - looked for non-existent NorthWall entry!"
-                        return
-                NorthBlockers[i] = -1
-                print"removed index ",index," from list slot ",i
-            else:
-                while (SouthBlockers[i] != index):
-                    i = i + 1
-                    if (i == 20):
-                        print"this should not get hit - looked for non-existent SouthWall entry!"
-                        return
-                SouthBlockers[i] = -1
-                print"removed index ",index," from list slot ",i
-        
-        
-    def WallCheck(self,param):
-        i = 0
-        while (i < 171):
-            if (param == "alloff"):
-                southWall.value[i].runAttachedResponder(kTeamLightsOff)
-                northWall.value[i].runAttachedResponder(kTeamLightsOff)
-            elif (param == "allon"):
-                southWall.value[i].runAttachedResponder(kTeamLightsOn)
-                northWall.value[i].runAttachedResponder(kTeamLightsOn)
-                    
-            i = i + 1
-            
-        if (param == "toc"):
-            for index in TOCLOGO:
-                southWall.value[index].runAttachedResponder(kTeamLightsOn)
-                northWall.value[index].runAttachedResponder(kTeamLightsOn)
-        
-        
-    def OnTimer(self,id):
-        if (id == WallCheck1):
-            self.WallCheck("allon")
-            PtAtTimeCallback(self.key,2,WallCheck2)
-        elif (id == WallCheck2):
-            self.WallCheck("alloff")
-            PtAtTimeCallback(self.key,1,WallCheck3)
-        elif (id == WallCheck3):
-            self.WallCheck("toc")
-#            PtAtTimeCallback(self.key,2,WallCheck4)
+        self.version = 2
+        self.ageSDL = None
 
-        elif (id == GameReset):
-            self.WallCheck("alloff")
+    def OnServerInitComplete(self):
+        PtDebugPrint("grsnMainWallPython::OnServerInitComplete")
+        self.ageSDL = PtGetAgeSDL()
         
-        
-    def OnBackdoorMsg(self, target, param):
-        if target == "event":
-            if param == "wallcheck":
-                PtAtTimeCallback(self.key,1,WallCheck1)
-            elif param == "reset":
-                PtAtTimeCallback(self.key,0,GameReset)
-        elif target == "lighton":
-                southWall.value[int(param)].runAttachedResponder(kTeamLightsOn)
-                northWall.value[int(param)].runAttachedResponder(kTeamLightsOn)
-        elif target == "lightoff":
-                southWall.value[int(param)].runAttachedResponder(kTeamLightsOff)
-                northWall.value[int(param)].runAttachedResponder(kTeamLightsOff)
-        elif target == "allon":
-            self.WallCheck("allon")
-        elif target == "alloff":
-            self.WallCheck("alloff")
-        elif target == "toc":
-            self.WallCheck("toc")
+        self.ageSDL.setNotify(self.key, "nState", 0.0)
+        self.ageSDL.setNotify(self.key, "sState", 0.0)
+
+    def OnClimbingBlockerEvent(self,blocker):
+        if(self.ageSDL['nState'][0] == kEnd):
+            return
+
+        for i in range(0,171):
+            if(yBlockers.value[i] == blocker):
+                yWall.value[i].runAttachedResponder(kBlockerBlink)
+                if(eventHandler):
+                    eventHandler.HandleBlocker()
+                break
+            elif(pBlockers.value[i] == blocker):
+                pWall.value[i].runAttachedResponder(kBlockerBlink)
+                if(eventHandler):
+                    eventHandler.HandleBlocker()
+                break
+
+    def OnSDLNotify(self,VARname,SDLname,playerID,tag):
+        #We only set the states for a Notify
+        yState = self.ageSDL["nState"][0]
+        pState = self.ageSDL["sState"][0]
+        if(yState == pState == kEnd):
+            for blocker in self.ageSDL["northWall"]:
+                if(blocker == -1):
+                    break
+                yWall.value[blocker].runAttachedResponder(kBlockerOn)
+            for blocker in self.ageSDL["southWall"]:
+                if(blocker == -1):
+                    break
+                pWall.value[blocker].runAttachedResponder(kBlockerOn)
+        elif(yState == pState == kSelectCount):
+            for i in range(0,171):
+                yWall.value[i].runAttachedResponder(kBlockerOff)
+                pWall.value[i].runAttachedResponder(kBlockerOff)

@@ -1,154 +1,40 @@
-""" *==LICENSE==*
-
-CyanWorlds.com Engine - MMOG client, server and tools
-Copyright (C) 2011  Cyan Worlds, Inc.
-
-This program is free software: you can redistribute it and/or modify
-it under the terms of the GNU General Public License as published by
-the Free Software Foundation, either version 3 of the License, or
-(at your option) any later version.
-
-This program is distributed in the hope that it will be useful,
-but WITHOUT ANY WARRANTY; without even the implied warranty of
-MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-GNU General Public License for more details.
-
-You should have received a copy of the GNU General Public License
-along with this program.  If not, see <http://www.gnu.org/licenses/>.
-
-Additional permissions under GNU GPL version 3 section 7
-
-If you modify this Program, or any covered work, by linking or
-combining it with any of RAD Game Tools Bink SDK, Autodesk 3ds Max SDK,
-NVIDIA PhysX SDK, Microsoft DirectX SDK, OpenSSL library, Independent
-JPEG Group JPEG library, Microsoft Windows Media SDK, or Apple QuickTime SDK
-(or a modified version of those libraries),
-containing parts covered by the terms of the Bink SDK EULA, 3ds Max EULA,
-PhysX SDK EULA, DirectX SDK EULA, OpenSSL and SSLeay licenses, IJG
-JPEG Library README, Windows Media SDK EULA, or QuickTime SDK EULA, the
-licensors of this Program grant you additional
-permission to convey the resulting work. Corresponding Source for a
-non-source form of such a combination shall include the source code for
-the parts of OpenSSL and IJG JPEG Library used as well as that of the covered
-work.
-
-You can contact Cyan Worlds, Inc. by email legal@cyan.com
- or by snail mail at:
-      Cyan Worlds, Inc.
-      14617 N Newport Hwy
-      Mead, WA   99021
-
- *==LICENSE==* """
-# Include Plasma code
+#imports
 from Plasma import *
 from PlasmaTypes import *
+from grsnWallConstants import *
 
-# for save/load
-import cPickle
-
-## COMMENTED OUT by Jeff due to the re-write in the garrison wall
-
-##############################################################
-# define the attributes/parameters that we need from the 3dsMax scene
-##############################################################
-southWall = ptAttribSceneobjectList(2,"South Wall",byObject=1)
-##############################################################
-# grsnWallImagerDisplayS
-##############################################################
-
-ReceiveInit = false
-
-## for team light responders
-kTeamLightsOn = 0
-kTeamLightsOff = 1
-
-## game states
-
-kWaiting = 0
-kSit = 1 #Sit
-kSelect = 2 #Count Blocker
-kReady = 3 #Set Blocker
-kWaitEntry = 4 #Rdy for Entry
-kPlayerEntry = 5 #Player Entry
-kGameInProgress = 6
-kWin = 7
-kQuit = 8
-
+#Max Wire
+pImager = ptAttribSceneobjectList(2,"Purple Imager", byObject=1)
 
 class grsnWallImagerDisplayS(ptResponder):
-   
-    # constants
     
     def __init__(self):
-        "construction"
-        PtDebugPrint("grsnWallImagerDisplayS::init begin")
+        PtDebugPrint("grsnWallImagerDisplayS::init")
         ptResponder.__init__(self)
         self.id = 52397
-        self.version = 1
-        PtDebugPrint("grsnWallImagerDisplayS::init end")        
+        self.version = 2
+        self.ageSDL = None
 
-    def RequestGameState(self):
-        ageSDL = PtGetAgeSDL()
-        
-        for blocker in ageSDL["southWall"]:
-            if blocker >= 0:
-                southWall.value[blocker].runAttachedResponder(kTeamLightsOn)
-                
     def OnServerInitComplete(self):
-        global ReceiveInit
+        PtDebugPrint("grsnWallImagerDisplayS::OnServerInitComplete")
+        self.ageSDL = PtGetAgeSDL()
         
-        ageSDL = PtGetAgeSDL()
-        PtDebugPrint("grsnWallPython::OnServerInitComplete")        
-        solo = true
-        if len(PtGetPlayerList()):
-            solo = false
-            ReceiveInit = true
-            self.RequestGameState()
-            return
-        else:
-            print"solo in climbing wall"
-            
-        #ageSDL.setFlags("nState",0,1)
-        #ageSDL.setFlags("sState",0,1)
-        #ageSDL.setFlags("NumBlockers",0,1)
-        #ageSDL.setFlags("nBlockerChange",0,1)
-        #ageSDL.setFlags("sBlockerChange",0,1)
+        self.ageSDL.setNotify(self.key, "sState", 0.0)
         
-        ageSDL.setNotify(self.key,"nState",0.0)
-        ageSDL.setNotify(self.key,"sState",0.0)
-        ageSDL.setNotify(self.key,"NumBlockers",0.0)
-        ageSDL.setNotify(self.key,"nBlockerChange",0.0)
-        ageSDL.setNotify(self.key,"sBlockerChange",0.0)
-        
-        #ageSDL.sendToClients("nState")
-        #ageSDL.sendToClients("sState")
-        #ageSDL.sendToClients("NumBlockers")
-        #ageSDL.sendToClients("nBlockerChange")
-        #ageSDL.sendToClients("sBlockerChange")
-            
-        
+        if(len(PtGetPlayerList()) and self.ageSDL["sState"] >= kWait):
+            for blocker in self.ageSDL["southWall"]:
+                if(blocker == -1):
+                    return
+                pImager.value[blocker].runAttachedResponder(kBlockerOn)
+
     def OnSDLNotify(self,VARname,SDLname,playerID,tag):
-        global NorthState
-        global SouthState
-        
-        ageSDL = PtGetAgeSDL()
-        value = ageSDL[VARname][0]
-        state = value
-#        print "grsnWallImagerDisplayS.OnSDLNotify: VARname = ",VARname," SDLname = ",SDLname," playerID = ",playerID," value = ",value
-        
-        if ((VARname == "nState") or (VARname == "sState")):
-            if (value == kSit):
-                i = 0
-                while (i < 171):
-                    #clear wall settings
-                    southWall.value[i].runAttachedResponder(kTeamLightsOff)
-                    i = i + 1                
-        elif (VARname == "sBlockerChange"):
-            index = value
-            on = ageSDL[VARname][1]
-            if (on):
-                southWall.value[state].runAttachedResponder(kTeamLightsOn)
-                print"Imager display S drawing n wall index",state               
-            else:
-                southWall.value[state].runAttachedResponder(kTeamLightsOff)
-                print"Imager display S clearing n wall index",state
+        #We only get a notify from nState
+        value = self.ageSDL[VARname][0]
+        if(value == kWait):
+            for blocker in self.ageSDL["southWall"]:
+                if(blocker == -1):
+                    break
+                pImager.value[blocker].runAttachedResponder(kBlockerOn)
+        if(value == kSelectCount):
+            for i in range(0,171):
+                pImager.value[i].runAttachedResponder(kBlockerOff)

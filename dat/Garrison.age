@@ -91,3 +91,4 @@ Page=WellWindowFake,83,1
 Page=Wallhelp,100
 Page=WallCamP,101
 Page=WallCamY,102
+Page=WallAnc,200
